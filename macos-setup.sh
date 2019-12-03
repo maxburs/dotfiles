@@ -5,3 +5,5 @@ rm -rf ~/.gitconfig
 ln ./.gitconfig ~/.gitconfig
 
 git config --global credential.helper osxkeychain
+
+chsh -s /bin/bash
