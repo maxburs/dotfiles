@@ -7,6 +7,46 @@
   "gitlens.hovers.currentLine.over": "line",
   "gitlens.blame.highlight.enabled": false,
   "gitlens.blame.heatmap.enabled": false,
+  "gitlens.hovers.annotations.changes": false,
+  "gitlens.hovers.annotations.details": false,
+  "gitlens.hovers.annotations.enabled": false,
+  "gitlens.hovers.currentLine.enabled": false,
+  "gitlens.menus": {
+    "editor": {
+      "blame": false,
+      "clipboard": true,
+      "compare": true,
+      "details": false,
+      "history": false,
+      "remote": false
+    },
+    "editorGroup": false,
+    "editorTab": {
+      "clipboard": true,
+      "compare": true,
+      "history": true,
+      "remote": true
+    },
+    "explorer": {
+      "clipboard": true,
+      "compare": true,
+      "history": true,
+      "remote": true
+    },
+    "scmGroup": {
+      "compare": true,
+      "openClose": true,
+      "stash": true,
+      "stashInline": true
+    },
+    "scmItem": {
+      "clipboard": true,
+      "compare": true,
+      "history": true,
+      "remote": true,
+      "stash": true
+    }
+  },
   "files.autoSave": "onFocusChange",
   "editor.wordWrap": "on",
   "editor.wrappingIndent": "indent",
@@ -20,23 +60,34 @@
   "javascript.updateImportsOnFileMove.enabled": "always",
   "debug.node.autoAttach": "on",
   "workbench.colorCustomizations": {
-      "terminal.foreground": "#b9bcba",
-      "terminal.background": "#1f1f1f",
-      "terminal.ansiBlack": "#3a3d43",
-      "terminal.ansiBlue": "#4f76a1",
-      "terminal.ansiCyan": "#578fa4",
-      "terminal.ansiGreen": "#879a3b",
-      "terminal.ansiMagenta": "#855c8d",
-      "terminal.ansiRed": "#be3f48",
-      "terminal.ansiWhite": "#b9bcba",
-      "terminal.ansiYellow": "#c5a635",
-      "terminal.ansiBrightBlack": "#888987",
-      "terminal.ansiBrightBlue": "#186de3",
-      "terminal.ansiBrightCyan": "#2e706d",
-      "terminal.ansiBrightGreen": "#0f722f",
-      "terminal.ansiBrightMagenta": "#fb0067",
-      "terminal.ansiBrightRed": "#fb001f",
-      "terminal.ansiBrightWhite": "#fdffb9",
-      "terminal.ansiBrightYellow": "#c47033"
-  }
+    "terminal.foreground": "#b9bcba",
+    "terminal.background": "#1f1f1f",
+    "terminal.ansiBlack": "#3a3d43",
+    "terminal.ansiBlue": "#4f76a1",
+    "terminal.ansiCyan": "#578fa4",
+    "terminal.ansiGreen": "#879a3b",
+    "terminal.ansiMagenta": "#855c8d",
+    "terminal.ansiRed": "#be3f48",
+    "terminal.ansiWhite": "#b9bcba",
+    "terminal.ansiYellow": "#c5a635",
+    "terminal.ansiBrightBlack": "#888987",
+    "terminal.ansiBrightBlue": "#186de3",
+    "terminal.ansiBrightCyan": "#2e706d",
+    "terminal.ansiBrightGreen": "#0f722f",
+    "terminal.ansiBrightMagenta": "#fb0067",
+    "terminal.ansiBrightRed": "#fb001f",
+    "terminal.ansiBrightWhite": "#fdffb9",
+    "terminal.ansiBrightYellow": "#c47033"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "window.zoomLevel": 1,
+  "terminal.integrated.shellArgs.windows": "-nologo"
 }
