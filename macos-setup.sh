@@ -5,5 +5,6 @@ rm -rf ~/.gitconfig
 ln ./.gitconfig ~/.gitconfig
 
 git config --global credential.helper osxkeychain
+git config --global core.editor "code --wait"
 
 chsh -s /bin/bash
