@@ -16,6 +16,7 @@ iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/in
 
 choco install git
 choco install nodejs --version=12.20.1
+choco install 7zip
 
 New-Item $home -Name "workspace" -ItemType "directory"
 Add-MpPreference -ExclusionPath "$($home)\workspace"
