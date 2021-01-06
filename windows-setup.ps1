@@ -10,7 +10,7 @@ choco install nodejs --version=12.20.1
 New-Item $home -Name "workspace" -ItemType "directory"
 Add-MpPreference -ExclusionPath "$($home)\workspace"
 
-$my-profile=@'
+$myProfile=@'
 function prompt {
   $p = Split-Path -leaf -path (Get-Location)
   "$p $ "
@@ -23,4 +23,4 @@ if (Test-Path($ChocolateyProfile)) {
 }
 '@
 
-New-Item -path $profile -type file –force --Value $my-profile
+New-Item -path $profile -type file –force --Value $myProfile
