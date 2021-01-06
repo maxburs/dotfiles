@@ -23,4 +23,4 @@ if (Test-Path($ChocolateyProfile)) {
 }
 '@
 
-New-Item -path $profile -type file –force --Value
+New-Item -path $profile -type file –force --Value $my-profile
