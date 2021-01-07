@@ -21,3 +21,6 @@ choco install 7zip
 New-Item $home -Name "workspace" -ItemType "directory"
 Add-MpPreference -ExclusionPath "$($home)\workspace"
 
+git config --global users.name "Maxwell Burson"
+git config --global user.email
+
