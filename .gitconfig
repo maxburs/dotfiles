@@ -2,4 +2,4 @@
 	name = Maxwell Burson
 	email = maxwellburson@gmail.com
 [core]
-	editor = code
+	editor = code --wait
