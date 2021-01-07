@@ -1,5 +1,5 @@
-[credential]
-	helper = cache
 [user]
 	name = Maxwell Burson
 	email = maxwellburson@gmail.com
+[core]
+	editor = code
