@@ -23,4 +23,4 @@ Add-MpPreference -ExclusionPath "$($home)\workspace"
 
 git config --global users.name "Maxwell Burson"
 git config --global user.email
-
+git config --global core.editor "code"
