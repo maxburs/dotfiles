@@ -11,7 +11,6 @@ __prompt_command() {
   local Red='\[\e[0;31m\]'
 
   if [ $EXIT != 0 ]; then
-    echo $EXIT
     PS1+="${Red}[${EXIT}]${RCol}"
   fi
 
