@@ -4,7 +4,7 @@ PROMPT_COMMAND=__prompt_command
 __prompt_command() {
   local EXIT="$?"
 
-  PS1="\W "
+  PS1="\W"
 
 
   local RCol='\[\e[0m\]'
