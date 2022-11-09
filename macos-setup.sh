@@ -1,3 +1,6 @@
+# Install command line tools (includes git)
+xcode-select --install
+
 # rm -rf ~/Library/Application\ Support/Code/User/settings.json
 # ln ./vscode.json ~/Library/Application\ Support/Code/User/settings.json
 
