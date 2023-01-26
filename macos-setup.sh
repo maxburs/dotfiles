@@ -11,3 +11,5 @@ git config --global credential.helper osxkeychain
 git config --global core.editor "code --wait"
 
 chsh -s /bin/bash
+
+defaults write com.apple.finder AppleShowAllFiles True
