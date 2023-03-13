@@ -22,4 +22,4 @@ brew install visual-studio-code
 brew install iterm2
 brew install google-chrome
 brew install spotify
-brew install --cask lunar
+brew install lunar
