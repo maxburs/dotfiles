@@ -18,9 +18,11 @@ defaults write com.apple.finder AppleShowAllFiles True
 
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-brew install --cask visual-studio-code
-brew install --cask iterm2
-brew install --cask google-chrome
-brew install --cask spotify
-brew install --cask lunar
-brew install --cask proxyman
+brew install visual-studio-code \
+  iterm2 \
+  google-chrome \
+  spotify \
+  lunar \
+  proxyman \
+  jq \
+  yq
