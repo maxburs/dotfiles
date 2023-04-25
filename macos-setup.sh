@@ -25,4 +25,5 @@ brew install visual-studio-code \
   lunar \
   proxyman \
   jq \
-  yq
+  yq \
+  ripgrep
