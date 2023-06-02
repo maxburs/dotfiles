@@ -26,4 +26,6 @@ brew install visual-studio-code \
   proxyman \
   jq \
   yq \
-  ripgrep
+  ripgrep \
+  curl \
+  ast-grep
