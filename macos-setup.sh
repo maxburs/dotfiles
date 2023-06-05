@@ -18,6 +18,9 @@ defaults write com.apple.finder AppleShowAllFiles True
 
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
+# https://stackoverflow.com/a/44719239
+brew install docker --cask
+
 brew install visual-studio-code \
   iterm2 \
   google-chrome \
@@ -29,5 +32,4 @@ brew install visual-studio-code \
   ripgrep \
   curl \
   ast-grep \
-  docker \
   docker-compose
