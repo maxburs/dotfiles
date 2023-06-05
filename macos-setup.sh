@@ -31,5 +31,4 @@ brew install visual-studio-code \
   yq \
   ripgrep \
   curl \
-  ast-grep \
-  docker-compose
+  ast-grep
