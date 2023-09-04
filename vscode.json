@@ -1,16 +1,42 @@
 {
-  "gitlens.advanced.messages": {
-      "suppressShowKeyBindingsNotice": true
+  "breadcrumbs.enabled": false,
+  "debug.javascript.autoAttachFilter": "onlyWithFlag",
+  "debug.toolBarLocation": "docked",
+  "editor.accessibilitySupport": "off",
+  "editor.cursorBlinking": "solid",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.fontFamily": "Berkeley Mono, Menlo, Monaco, 'Courier New', monospace",
+  "editor.inlineSuggest.enabled": true,
+  "editor.minimap.enabled": false,
+  "editor.renderWhitespace": "none",
+  "editor.rulers": [
+    80
+  ],
+  "editor.wordWrap": "on",
+  "editor.wrappingIndent": "indent",
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+  "extensions.ignoreRecommendations": false,
+  "files.autoSave": "onFocusChange",
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": true,
+    "markdown": true,
+    "scminput": false,
+    "yaml": true
   },
+  "gitlens.advanced.fileHistoryFollowsRenames": true,
+  "gitlens.blame.heatmap.enabled": false,
+  "gitlens.blame.highlight.enabled": false,
   "gitlens.codeLens.enabled": false,
   "gitlens.currentLine.enabled": false,
-  "gitlens.hovers.currentLine.over": "line",
-  "gitlens.blame.highlight.enabled": false,
-  "gitlens.blame.heatmap.enabled": false,
   "gitlens.hovers.annotations.changes": false,
   "gitlens.hovers.annotations.details": false,
   "gitlens.hovers.annotations.enabled": false,
   "gitlens.hovers.currentLine.enabled": false,
+  "gitlens.hovers.currentLine.over": "line",
   "gitlens.menus": {
     "editor": {
       "blame": false,
@@ -47,18 +73,16 @@
       "stash": true
     }
   },
-  "files.autoSave": "onFocusChange",
-  "editor.wordWrap": "on",
-  "editor.wrappingIndent": "indent",
-  "editor.minimap.enabled": false,
-  "git.autofetch": true,
-  "debug.toolBarLocation": "docked",
-  "editor.rulers": [
-      80
-  ],
-  "git.confirmSync": false,
   "javascript.updateImportsOnFileMove.enabled": "always",
-  "debug.node.autoAttach": "on",
+  "rust-analyzer.inlayHints.parameterHints.enable": false,
+  "rust-analyzer.inlayHints.typeHints": false,
+  "terminal.integrated.scrollback": 10000,
+  "terminal.integrated.shell.windows": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+  "terminal.integrated.shellArgs.windows": "-nologo",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "update.showReleaseNotes": false,
+  "window.title": "${rootName}${separator}${activeEditorShort}${separator}${profileName}",
+  "window.zoomLevel": 1,
   "workbench.colorCustomizations": {
     "terminal.foreground": "#b9bcba",
     "terminal.background": "#1f1f1f",
@@ -79,15 +103,29 @@
     "terminal.ansiBrightWhite": "#fdffb9",
     "terminal.ansiBrightYellow": "#c47033"
   },
-  "[typescriptreact]": {
+  "workbench.colorTheme": "Default Dark+",
+  "workbench.editor.untitled.hint": "hidden",
+  "workbench.editorAssociations": {
+    "git-rebase-todo": "default"
+  },
+  "workbench.startupEditor": "newUntitledFile",
+  "[css]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  "[git-commit]": {
+    "editor.rulers": [
+      72
+    ],
+    "workbench.editor.restoreViewState": false
   },
-  "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  "[rust]": {
+    "editor.tabSize": 4
   },
-  "window.zoomLevel": 1,
-  "terminal.integrated.shellArgs.windows": "-nologo"
+  "[scss]": {
+    "editor.suggest.insertMode": "replace",
+    "gitlens.codeLens.scopes": [
+      "document"
+    ],
+    "cSpell.fixSpellingWithRenameProvider": false
+  }
 }
