@@ -32,4 +32,5 @@ brew install visual-studio-code \
   ripgrep \
   curl \
   ast-grep \
-  docker
+  docker \
+  linearmouse
