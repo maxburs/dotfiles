@@ -1,5 +1,7 @@
 [user]
 	name = Maxwell Burson
 	email = maxwellburson@gmail.com
+[credential]
+	helper = osxkeychain
 [core]
 	editor = code --wait
