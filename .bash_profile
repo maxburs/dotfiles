@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 
 PROMPT_COMMAND=__prompt_command
 
