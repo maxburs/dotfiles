@@ -34,4 +34,5 @@ brew install visual-studio-code \
   ast-grep \
   docker \
   gimp \
-  1password-cli
+  1password-cli \
+  gh
