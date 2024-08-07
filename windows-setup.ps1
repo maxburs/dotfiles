@@ -1,5 +1,6 @@
 Set-ExecutionPolicy RemoteSigned
 
+# Create a dev drive: https://learn.microsoft.com/en-us/windows/dev-drive/
 # Install winget: https://apps.microsoft.com/detail/9NBLGGH4NNS1
 # Install Chocolatey: https://chocolatey.org/install#individual
 # Change default terminal
