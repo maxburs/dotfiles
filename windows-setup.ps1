@@ -7,6 +7,12 @@ Set-ExecutionPolicy RemoteSigned
 
 # https://community.chocolatey.org/packages
 
+# Set dev file locations to dev box
+# https://learn.microsoft.com/en-us/windows/dev-drive/#storing-package-cache-on-dev-drive
+setx /M YARN_GLOBAL_FOLDER D:\.yarn
+setx /M YARN_CACHE_FOLDER D:\.yarn\cache
+setx /M npm_config_cache D:\.npm\cache
+
 # # Settings
 #   Performance Options -> Fade or slide menu's into view
 #   Keyboard -> Cursor blink rate -> None
