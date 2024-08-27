@@ -35,6 +35,7 @@ brew install visual-studio-code \
   docker \
   gimp \
   1password-cli \
-  gh
+  gh \
+  git-credential-manager
 
 # Github auth setup: https://developer.1password.com/docs/cli/shell-plugins/github/
