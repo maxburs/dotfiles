@@ -7,7 +7,9 @@ xcode-select --install
 # rm -rf ~/.gitconfig
 # ln ./.gitconfig ~/.gitconfig
 
-git config --global credential.helper osxkeychain
+# Use git-credential-manager instead
+# git config --global credential.helper osxkeychain
+
 git config --global core.editor "code --wait"
 
 # Make bash default shell
@@ -32,9 +34,7 @@ brew install visual-studio-code \
   ripgrep \
   curl \
   ast-grep \
-  docker \
   gimp \
-  1password-cli \
   gh \
 
   git-credential-manager
