@@ -36,6 +36,7 @@ brew install visual-studio-code \
   ast-grep \
   gimp \
   gh \
+  obsidian
 
   git-credential-manager
 
