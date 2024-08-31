@@ -36,6 +36,9 @@ brew install visual-studio-code \
   gimp \
   1password-cli \
   gh \
+
   git-credential-manager
 
-# Github auth setup: https://developer.1password.com/docs/cli/shell-plugins/github/
+
+  # https://asdf-vm.com/guide/getting-started.html
+  
