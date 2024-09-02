@@ -7,3 +7,5 @@
 	editor = code --wait
 [push]
 	autoSetupRemote = true
+[pull]
+	rebase = false
