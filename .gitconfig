@@ -3,6 +3,9 @@
 	email = maxwellburson@gmail.com
 [core]
 	editor = code --wait
+[credential]
+	# https://github.com/git-ecosystem/git-credential-manager
+	helper = /usr/local/share/gcm-core/git-credential-manager
 [push]
 	autoSetupRemote = true
 [pull]
