@@ -17,6 +17,7 @@ chsh -s /bin/bash
 
 # Show hidden files in finder
 defaults write com.apple.finder AppleShowAllFiles True
+# defaults write com.apple.finder AppleShowAllFiles YES
 
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
