@@ -19,3 +19,5 @@ precmd() {
 
   PS1+="\$ "
 }
+
+alias gb="git branch --sort=-committerdate"
