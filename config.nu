@@ -11,7 +11,7 @@ $env.config.buffer_editor = "code"
 
 $env.VOLTA_HOME = "~/.volta"
 
-$env.path ++= [$"($env.VOLTA_HOME)/bin"]
+$env.path ++= ['/opt/homebrew/bin', $"($env.VOLTA_HOME)/bin"]
 
 $env.PROMPT_COMMAND_RIGHT = ""
 
