@@ -39,9 +39,9 @@ brew install visual-studio-code \
   gh \
   obsidian \
   hyperfine \
-  tldr
-
-  git-credential-manager
+  tldr \
+  git-credential-manager \
+  git
 
 
   # https://asdf-vm.com/guide/getting-started.html
