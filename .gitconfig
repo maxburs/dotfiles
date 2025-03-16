@@ -1,12 +1,52 @@
-[user]
-	name = Maxwell Burson
-	email = maxwellburson@gmail.com
-[core]
-	editor = code --wait
+# Tips: https://blog.gitbutler.com/how-git-core-devs-configure-git/
+# Available settings: https://git-scm.com/docs/git-config#_variables
+
 [credential]
-	# https://github.com/git-ecosystem/git-credential-manager
-	helper = /usr/local/share/gcm-core/git-credential-manager
+  # Clear other helpers
+  helper = 
+  # https://github.com/git-ecosystem/git-credential-manager
+  helper = /usr/local/share/gcm-core/git-credential-manager
+[credential "https://dev.azure.com"]
+  useHttpPath = true
+[core]
+  editor = code --wait
+  fsmonitor = true
+  untrackedCache = true
+[user]
+  name = Maxwell Burson
+  email = maxwellburson@gmail.com
 [push]
-	autoSetupRemote = true
+  default = simple
+  autoSetupRemote = true
+  followTags = true
 [pull]
-	rebase = false
+  rebase = false
+[column]
+  ui = auto
+[branch]
+  sort = -committerdate
+[tag]
+  sort = version:refname
+[init]
+  defaultBranch = main
+[diff]
+  algorithm = histogram
+  colorMoved = plain
+  mnemonicPrefix = true
+  renames = true
+[fetch]
+  prune = true
+  pruneTags = true
+  all = true
+[merge]
+  # This should create a zdiff fallback if zdiff3 isn't available?
+  conflictstyle = zdiff
+  conflictstyle = zdiff3
+[rebase]
+  autosquash = true
+  autostash = true
+  updateRef = true
+[help]
+  autocorrect = prompt
+[commit]
+  verbose = true
