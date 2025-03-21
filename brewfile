@@ -1,6 +1,12 @@
 # https://matthiasportzel.com/brewfile/
 # https://docs.brew.sh/Brew-Bundle-and-Brewfile
 
+def noUpdate(&block)
+  ENV["HOMEBREW_NO_AUTO_UPDATE"]="1"
+  block.call
+  ENV.delete("HOMEBREW_NO_AUTO_UPDATE")
+end
+
 brew "jq"
 brew "yq"
 brew "ripgrep"
@@ -20,15 +26,20 @@ cask "git-credential-manager"
 
 ### Self updating
 
-cask "iterm2", args: { no_upgrade: true }
-cask "obsidian", args: { no_upgrade: true }
-cask "visual-studio-code", args: { no_upgrade: true }
-cask "google-chrome", args: { no_upgrade: true }
-cask "spotify", args: { no_upgrade: true }
+noUpdate do 
+  cask "iterm2"
+  cask "obsidian"
+  cask "visual-studio-code"
+  cask "google-chrome"
+  cask "spotify"
+end
 
-if ENV['PERSONAL']
+if ENV["PERSONAL"]
   cask "vlc"
-  cask "notion", args: { no_upgrade: true }
+
+  noUpdate do 
+    cask "notion"
+  end
 
   # Outdated, install v8 from website: https://1password.com/downloads/mac
   # mas "1Password", id: 1333542190
