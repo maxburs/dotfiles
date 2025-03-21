@@ -17,3 +17,10 @@ $env.PROMPT_COMMAND_RIGHT = ""
 
 $env.PROMPT_COMMAND = {||  (echo $env.PWD | split row  "/" | last) }
 $env.PROMPT_INDICATOR = ' % '
+
+# https://matthiasportzel.com/brewfile/
+def bbic [] {
+  brew update
+  brew bundle install --cleanup --file=~/workspace/dotfiles/brewfile
+  brew upgrade
+}

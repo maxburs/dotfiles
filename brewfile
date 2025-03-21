@@ -1,0 +1,30 @@
+# https://matthiasportzel.com/brewfile/
+# https://docs.brew.sh/Brew-Bundle-and-Brewfile
+
+brew "jq"
+brew "yq"
+brew "ripgrep"
+brew "curl"
+brew "ast-grep"
+brew "gh"
+brew "hyperfine"
+brew "tldr"
+brew "git"
+brew "volta"
+brew "mas"
+brew "nushell"
+
+cask "lunar"
+cask "gimp"
+cask "git-credential-manager"
+cask "iterm2", args: { no_upgrade: true }
+cask "obsidian", args: { no_upgrade: true }
+cask "visual-studio-code", args: { no_upgrade: true }
+cask "google-chrome", args: { no_upgrade: true }
+cask "spotify", args: { no_upgrade: true }
+
+# Outdated, install v8 from website: https://1password.com/downloads/mac
+# mas "1Password", id: 1333542190
+mas "WhatsApp Messenger", id: 310633997
+mas "1Blocker", id: 1365531024
+mas "Paprika Recipe Manager 3", id: 1303222628
