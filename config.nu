@@ -20,7 +20,7 @@ $env.PROMPT_INDICATOR = ' % '
 
 def bbic [] {
   brew update
-  # brew bundle install --cleanup --file=~/workspace/dotfiles/brewfile.work
-  # brew bundle install --cleanup --file=~/workspace/dotfiles/brewfile.home
+  # brew bundle install --cleanup --file=~/workspace/dotfiles/brewfile.work.rb
+  # brew bundle install --cleanup --file=~/workspace/dotfiles/brewfile.home.rb
   brew upgrade
 }
