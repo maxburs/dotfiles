@@ -18,6 +18,8 @@ $env.PROMPT_COMMAND_RIGHT = ""
 $env.PROMPT_COMMAND = {||  (echo $env.PWD | split row  "/" | last) }
 $env.PROMPT_INDICATOR = ' % '
 
+# $env.PERSONAL = 'true';
+
 # https://matthiasportzel.com/brewfile/
 def bbic [] {
   brew update

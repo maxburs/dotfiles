@@ -17,14 +17,23 @@ brew "nushell"
 cask "lunar"
 cask "gimp"
 cask "git-credential-manager"
+
+### Self updating
+
 cask "iterm2", args: { no_upgrade: true }
 cask "obsidian", args: { no_upgrade: true }
 cask "visual-studio-code", args: { no_upgrade: true }
 cask "google-chrome", args: { no_upgrade: true }
 cask "spotify", args: { no_upgrade: true }
 
-# Outdated, install v8 from website: https://1password.com/downloads/mac
-# mas "1Password", id: 1333542190
-mas "WhatsApp Messenger", id: 310633997
-mas "1Blocker", id: 1365531024
-mas "Paprika Recipe Manager 3", id: 1303222628
+if ENV['PERSONAL']
+  cask "vlc"
+  cask "notion", args: { no_upgrade: true }
+
+  # Outdated, install v8 from website: https://1password.com/downloads/mac
+  # mas "1Password", id: 1333542190
+  mas "Todoist", id: 585829637
+  mas "WhatsApp Messenger", id: 310633997
+  mas "1Blocker", id: 1365531024
+  mas "Paprika Recipe Manager 3", id: 1303222628
+end
