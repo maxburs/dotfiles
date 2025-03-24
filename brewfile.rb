@@ -18,9 +18,9 @@ def add_shared_deps
   brew 'hyperfine'
   brew 'tldr'
   brew 'git'
-  brew 'volta'
   brew 'mas'
   brew 'nushell'
+  brew 'asdf'
   
   cask 'lunar'
   cask 'gimp'

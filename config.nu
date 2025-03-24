@@ -11,7 +11,15 @@ $env.config.buffer_editor = 'code'
 
 # $env.VOLTA_HOME = '~/.volta' | path expand
 
-# $env.path ++= ['/usr/local/bin', '/opt/homebrew/bin', $"($env.VOLTA_HOME)/bin"]
+$env.path ++= ['/usr/local/bin', '/opt/homebrew/bin']
+
+# asdf config
+
+# https://asdf-vm.com/guide/getting-started.html#_2-configure-asdf
+
+$env.ASDF_DATA_DIR = '~/.asdf' | path expand
+$env.path ++= [$"($env.ASDF_DATA_DIR)/shims" ]
+. "$asdf_data_dir/completions/nushell.nu"
 
 $env.PROMPT_COMMAND_RIGHT = ""
 
