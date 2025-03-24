@@ -9,9 +9,9 @@
 $env.config.show_banner = false
 $env.config.buffer_editor = 'code'
 
-$env.VOLTA_HOME = '~/.volta' | path expand
+# $env.VOLTA_HOME = '~/.volta' | path expand
 
-$env.path ++= ['/usr/local/bin', '/opt/homebrew/bin', $"($env.VOLTA_HOME)/bin"]
+# $env.path ++= ['/usr/local/bin', '/opt/homebrew/bin', $"($env.VOLTA_HOME)/bin"]
 
 $env.PROMPT_COMMAND_RIGHT = ""
 
