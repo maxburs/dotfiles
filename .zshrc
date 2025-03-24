@@ -1,6 +1,3 @@
-
-# Path configuration here instad of nushell config so binaries are available
-# everywhere
 PATH+=":/usr/local/bin:/opt/homebrew/bin"
 
 ## asdf
