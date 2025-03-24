@@ -1,7 +1,7 @@
 
 # Path configuration here instad of nushell config so binaries are available
 # everywhere
-PATH+="/usr/local/bin:/opt/homebrew/bin"
+PATH+=":/usr/local/bin:/opt/homebrew/bin"
 
 ## asdf
 
@@ -17,7 +17,7 @@ autoload -Uz compinit && compinit
 
 export VOLTA_HOME="$HOME/.volta"
 
-PATH+="$VOLTA_HOME/bin"
+PATH+=":$VOLTA_HOME/bin"
 
 precmd() {
   local EXIT="$?"
