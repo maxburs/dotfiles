@@ -25,6 +25,7 @@ def add_shared_deps
   cask 'lunar'
   cask 'gimp'
   cask 'git-credential-manager'
+  cask 'proxyman'
   
   ### Self updating
   
