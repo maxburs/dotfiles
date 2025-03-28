@@ -19,7 +19,7 @@ $env.path ++= ['/usr/local/bin', '/opt/homebrew/bin']
 
 $env.ASDF_DATA_DIR = '~/.asdf' | path expand
 $env.path ++= [$"($env.ASDF_DATA_DIR)/shims" ]
-. "$asdf_data_dir/completions/nushell.nu"
+source ~/.asdf/completions/nushell.nu
 
 $env.PROMPT_COMMAND_RIGHT = ""
 
