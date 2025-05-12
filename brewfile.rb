@@ -21,6 +21,10 @@ def add_shared_deps
   brew 'mas'
   brew 'nushell'
   brew 'asdf'
+
+  # asdf nodejs plugin dependencies
+  brew 'gpg'
+  brew 'gawk'
   
   cask 'lunar'
   cask 'gimp'
