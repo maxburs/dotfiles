@@ -32,3 +32,4 @@ brew install --cask \
 # https://asdf-vm.com/guide/getting-started.html
 # asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
 # asdf install nodejs latest
+# ln -sf "$(pwd)/.tool-versions" ~/.tool-versions
