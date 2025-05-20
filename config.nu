@@ -18,6 +18,7 @@ $env.path ++= ['/usr/local/bin', '/opt/homebrew/bin']
 # https://asdf-vm.com/guide/getting-started.html#_2-configure-asdf
 
 $env.ASDF_NODEJS_AUTO_ENABLE_COREPACK = 'true'
+$env.ASDF_NODEJS_LEGACY_FILE_DYNAMIC_STRATEGY = 'latest_available';
 $env.ASDF_DATA_DIR = '~/.asdf' | path expand
 $env.path ++= [$"($env.ASDF_DATA_DIR)/shims" ]
 source ~/.asdf/completions/nushell.nu
