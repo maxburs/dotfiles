@@ -33,3 +33,7 @@ brew install --cask \
 # asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
 # asdf install nodejs latest
 # ln -sf "$(pwd)/.tool-versions" ~/.tool-versions
+
+npm install -g @anthropic-ai/claude-code
+
+asdf reshim nodejs # Must be run after every `npm install -g` call

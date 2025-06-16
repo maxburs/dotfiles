@@ -41,4 +41,3 @@ def add_shared_deps
     cask 'spotify'
   end
 end
-
