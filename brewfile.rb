@@ -39,5 +39,6 @@ def add_shared_deps
     cask 'visual-studio-code'
     cask 'google-chrome'
     cask 'spotify'
+    cask 'zed'
   end
 end
