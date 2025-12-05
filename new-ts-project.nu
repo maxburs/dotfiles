@@ -1,4 +1,5 @@
-asdf set nodejs 24.11.1yarn init -2
+asdf set nodejs 24.11.1
+yarn init -2
 "nodeLinker: node-modules\n" | save --force .yarnrc.yml
 yarn
 yarn add -D typescript @tsconfig/node24 prettier @types/node@24
