@@ -20,3 +20,8 @@ echo `{
   }
 }
 ` | save --force tsconfig.json
+echo `.yarn` | save --force .prettierignore
+open ./package.json
+  | upsert scripts.format 'prettier --write --ignore-unknown .'
+  | save --force ./package.json
+yarn format
