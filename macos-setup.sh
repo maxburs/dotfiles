@@ -7,6 +7,9 @@ xcode-select --install
 # rm -rf ~/.gitconfig
 # ln ./.gitconfig ~/.gitconfig
 
+# rm -rf ~/.gitconfig
+# ln ./.default-npm-packages ~/.default-npm-packages
+
 # Use git-credential-manager instead
 # git config --global credential.helper osxkeychain
 
@@ -30,10 +33,8 @@ brew install --cask \
   spotify
 
 # https://asdf-vm.com/guide/getting-started.html
-# asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
-# asdf install nodejs latest
 # ln -sf "$(pwd)/.tool-versions" ~/.tool-versions
-
-npm install -g @anthropic-ai/claude-code
+# asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
+# asdf install
 
 asdf reshim nodejs # Must be run after every `npm install -g` call
