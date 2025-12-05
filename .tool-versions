@@ -1,2 +1,2 @@
 # https://asdf-vm.com/guide/getting-started.html#_6-set-a-version
-nodejs lts
+nodejs 24.11.1
