@@ -41,7 +41,8 @@
 [merge]
   # This should create a zdiff fallback if zdiff3 isn't available?
   conflictstyle = zdiff
-  conflictstyle = zdiff3
+  # zdiff not supported on macOS git
+  # conflictstyle = zdiff3
 [rebase]
   autosquash = true
   autostash = true
