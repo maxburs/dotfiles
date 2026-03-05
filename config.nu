@@ -40,11 +40,7 @@ def bbic [] {
 }
 
 def backup-nu-config [] {
-  mut config = open $nu.config-path;
-  $config | save --force `~/OneDrive - Microsoft/config.nu`;
-  let deliminator = '## -- Local modifications --';
-  $config = $config | split row $"\n($deliminator)" | first | str join $"\n($deliminator)\n";
-  $config | save --force ($dotfiles_path | path join 'config.nu');
+  open $nu.config-path | save --force `~/OneDrive - Microsoft/config.nu`;
 }
 
 def main-git-branch [] {
