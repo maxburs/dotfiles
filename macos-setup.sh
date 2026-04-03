@@ -38,3 +38,5 @@ brew install --cask \
 # asdf install
 
 asdf reshim nodejs # Must be run after every `npm install -g` call
+
+nu -e '"source ~/workspace/dotfiles/config.nu" | save $env.config-path'

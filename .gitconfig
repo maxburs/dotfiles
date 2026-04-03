@@ -47,7 +47,5 @@
   autosquash = true
   autostash = true
   updateRef = true
-[help]
-  autocorrect = prompt
 [commit]
   verbose = true
