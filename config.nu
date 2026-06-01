@@ -33,13 +33,13 @@ let worktrees_path =  $workspace_path | path join 'worktrees';
 let dotfiles_path = $workspace_path | path join 'dotfiles';
 
 # https://matthiasportzel.com/brewfile/
-def bbic [] {
+def _bbic [] {
   brew update
   brew bundle install --cleanup --file=($dotfiles_path | path join $"brewfile.($env.computer_type).rb")
   brew upgrade
 }
 
-def new_ts_project [] {
+def _new_ts_project [] {
   asdf set nodejs 24.11.1
   yarn init -2
   "nodeLinker: node-modules\n" | save --force .yarnrc.yml
@@ -69,11 +69,11 @@ def new_ts_project [] {
   yarn format
 }
 
-def backup-nu-config [] {
+def _backup-nu-config [] {
   open $nu.config-path | save --force `~/OneDrive - Microsoft/config.nu`;
 }
 
-def main-git-branch [] {
+def _main-git-branch [] {
   git branch -r
     | lines
     | where ($it | str trim | str starts-with 'origin/HEAD')
@@ -83,8 +83,8 @@ def main-git-branch [] {
     | get main_branch
 }
 
-def start-feature [feature_name: string, --dry (-d)] {
-  let repo_name: string = pwd | path basename;
+def _start-feature [feature_name: string, --dry (-d), --from-current (-c)] {
+  let repo_name: string = git config --get remote.origin.url | path basename;
   mut branch_name = $feature_name;
   let folder = ($worktrees_path | path join $"($feature_name)--($repo_name)");
 
@@ -92,12 +92,21 @@ def start-feature [feature_name: string, --dry (-d)] {
     $branch_name = $"users/maburson/($branch_name)";
   }
 
-  let command = $"git worktree add -b ($branch_name) ($folder) (main-git-branch)" 
+  let main_git_branch = if $from_current {
+    git branch --show-current
+  } else {
+    _main-git-branch
+  }
+
+  let command = $"git worktree add -b ($branch_name) ($folder) ($main_git_branch)" 
 
   print $command;
 
   if $dry == false {
-    nu -e $command
+    # nu -e $command |
+    git worktree add -b $branch_name $folder $main_git_branch
     code $folder
+  } else {
+    print { "repo_name": $repo_name, "branch_name": $branch_name, "folder": $folder, "main_git_branch": $main_git_branch}
   }
 }
