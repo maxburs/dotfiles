@@ -11,16 +11,6 @@ $env.config.buffer_editor = 'code'
 
 $env.path ++= ['/usr/local/bin', '/opt/homebrew/bin']
 
-# asdf config
-
-# https://asdf-vm.com/guide/getting-started.html#_2-configure-asdf
-
-$env.ASDF_NODEJS_AUTO_ENABLE_COREPACK = 'true'
-$env.ASDF_NODEJS_LEGACY_FILE_DYNAMIC_STRATEGY = 'latest_available';
-$env.ASDF_DATA_DIR = '~/.asdf' | path expand
-$env.path ++= [$"($env.ASDF_DATA_DIR)/shims"]
-source ~/.asdf/completions/nushell.nu
-
 $env.PROMPT_COMMAND_RIGHT = ""
 
 $env.PROMPT_COMMAND = {|| (echo $env.PWD | split row  "/" | last) }
@@ -32,10 +22,12 @@ let workspace_path = '~/workspace' | path expand
 let worktrees_path =  $workspace_path | path join 'worktrees';
 let dotfiles_path = $workspace_path | path join 'dotfiles';
 
+let brewfile_path = $dotfiles_path | path join $"brewfile.($env.computer_type).rb";
+
 # https://matthiasportzel.com/brewfile/
-def _bbic [] {
+def _bbic [--cleanup (-c)] {
   brew update
-  brew bundle install --cleanup --file=($dotfiles_path | path join $"brewfile.($env.computer_type).rb")
+  brew bundle install --file=($brewfile_path) ...(if $cleanup { [--cleanup --force] } else { [] })
   brew upgrade
 }
 
@@ -67,10 +59,6 @@ def _new_ts_project [] {
     | upsert scripts.format 'prettier --write --ignore-unknown .'
     | save --force ./package.json
   yarn format
-}
-
-def _backup-nu-config [] {
-  open $nu.config-path | save --force `~/OneDrive - Microsoft/config.nu`;
 }
 
 def _main-git-branch [] {
@@ -109,4 +97,17 @@ def _start-feature [feature_name: string, --dry (-d), --from-current (-c)] {
   } else {
     print { "repo_name": $repo_name, "branch_name": $branch_name, "folder": $folder, "main_git_branch": $main_git_branch}
   }
+}
+
+# https://github.com/Schniz/fnm/issues/463#issuecomment-4381417804
+if not (which fnm | is-empty) {
+    ^fnm env --json | from json | load-env
+
+    $env.PATH = $env.PATH | prepend ($env.FNM_MULTISHELL_PATH | path join (if $nu.os-info.name == 'windows' {''} else {'bin'}))
+    $env.config.hooks.env_change.PWD = (
+        $env.config.hooks.env_change.PWD? | append {
+            condition: {|| ['.nvmrc' '.node-version', 'package.json'] | any {|el| $el | path exists}}
+            code: {|| ^fnm use --install-if-missing --silent-if-unchanged}
+        }
+    )
 }

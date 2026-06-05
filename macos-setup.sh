@@ -32,11 +32,6 @@ brew install --cask \
   google-chrome \
   spotify
 
-# https://asdf-vm.com/guide/getting-started.html
-# ln -sf "$(pwd)/.tool-versions" ~/.tool-versions
-# asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
-# asdf install
-
-asdf reshim nodejs # Must be run after every `npm install -g` call
+mkdir ~/.nvm
 
 nu -e '"source ~/workspace/dotfiles/config.nu" | save $env.config-path'

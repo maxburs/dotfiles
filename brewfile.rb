@@ -20,7 +20,7 @@ def add_shared_deps
   brew 'git'
   brew 'mas'
   brew 'nushell'
-  brew 'asdf'
+  brew 'fnm'
 
   # asdf nodejs plugin dependencies
   brew 'gpg'
