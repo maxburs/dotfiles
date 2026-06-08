@@ -99,6 +99,14 @@ def _start-feature [feature_name: string, --dry (-d), --from-current (-c)] {
   }
 }
 
+def _wto [] {
+  ls $worktrees_path | each {|folder| $folder.name | path basename }
+}
+
+def _wt [branch: string@_wto] {
+  code ($worktrees_path | path join $branch)
+}
+
 # https://github.com/Schniz/fnm/issues/463#issuecomment-4381417804
 if not (which fnm | is-empty) {
     ^fnm env --json | from json | load-env
