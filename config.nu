@@ -103,8 +103,16 @@ def _wto [] {
   ls $worktrees_path | each {|folder| $folder.name | path basename }
 }
 
-def _wt [branch: string@_wto] {
-  code ($worktrees_path | path join $branch)
+def _wt [branch?: string@_wto, --all (-a)] {
+  if $all and ($branch != null) {
+    print -e "Pass either a branch or --all, not both"
+  } else if $all {
+    _wto | each {|b| code ($worktrees_path | path join $b) }
+  } else if ($branch != null) {
+    code ($worktrees_path | path join $branch)
+  } else {
+    print -e "Pass a branch name or --all"
+  }
 }
 
 # https://github.com/Schniz/fnm/issues/463#issuecomment-4381417804
