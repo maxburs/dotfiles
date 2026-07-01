@@ -22,12 +22,15 @@ let workspace_path = '~/workspace' | path expand
 let worktrees_path =  $workspace_path | path join 'worktrees';
 let dotfiles_path = $workspace_path | path join 'dotfiles';
 
-let brewfile_path = $dotfiles_path | path join $"brewfile.($env.computer_type).rb";
+def _brewfile_path [] {
+  $dotfiles_path | path join $"brewfile.($env.computer_type).rb";
+}
 
 # https://matthiasportzel.com/brewfile/
 def _bbic [--cleanup (-c)] {
+  print $"--file=(_brewfile_path)"
   brew update
-  brew bundle install --file=($brewfile_path) ...(if $cleanup { [--cleanup --force] } else { [] })
+  brew bundle install --file=(_brewfile_path) ...(if $cleanup { [--cleanup --force] } else { [] })
   brew upgrade
 }
 
