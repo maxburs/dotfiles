@@ -1,3 +1,9 @@
+# Copilot agent / CI shells need a POSIX shell (bash-style &&, ||, export, etc.).
+# The agent's terminal sets COPILOT_AGENT / AI_AGENT; hand off to zsh before any
+# nushell-specific setup runs. Interactive user terminals lack these vars and stay in nushell.
+if ($env.COPILOT_AGENT? | is-not-empty) or ($env.AI_AGENT? | is-not-empty) {
+    exec /bin/zsh -l
+}
 
 # See https://www.nushell.sh/book/configuration.html
 #
@@ -119,7 +125,7 @@ def _wt [branch?: string@_wto, --all (-a)] {
 if not (which fnm | is-empty) {
     ^fnm env --json | from json | load-env
 
-    $env.PATH = $env.PATH | prepend ($env.FNM_MULTISHELL_PATH | path join (if $nu.os-info.name == 'windows' {''} else {'bin'}))
+    $env.path = $env.path | prepend ($env.FNM_MULTISHELL_PATH | path join (if $nu.os-info.name == 'windows' {''} else {'bin'}))
     $env.config.hooks.env_change.PWD = (
         $env.config.hooks.env_change.PWD? | append {
             condition: {|| ['.nvmrc' '.node-version', 'package.json'] | any {|el| $el | path exists}}
