@@ -9,7 +9,14 @@
 $env.config.show_banner = false
 $env.config.buffer_editor = 'code'
 
+# Rust/Cargo
+source "~/.cargo/env.nu"
+
+# Homebrew
 $env.path ++= ['/usr/local/bin', '/opt/homebrew/bin']
+
+source ./nix-env.nu
+load-nix-env
 
 $env.PROMPT_COMMAND_RIGHT = ""
 
