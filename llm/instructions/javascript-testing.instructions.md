@@ -1,6 +1,8 @@
 ---
 description: "Test authoring conventions"
-applyTo: "**/*.{spec,vitest}.{ts,tsx,js,jsx}"
+applyTo: "**/*.{spec,vitest}.{mts,mjs,cts,cjs,ts,tsx,js,jsx}"
 ---
+
+Repo-specific guidance trumps these instructions
 
 - Bias towards inline snapshots
