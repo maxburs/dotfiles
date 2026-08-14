@@ -77,6 +77,14 @@ def _main-git-branch [] {
     | get main_branch
 }
 
+def _run-worktree-hook [repo_name: string, folder: string] {
+  let hooks = $env.worktree_hooks? | default {};
+  if ($repo_name in $hooks) {
+    cd $folder;
+    do ($hooks | get $repo_name)
+  }
+}
+
 def _start-feature [feature_name: string, --dry (-d), --from-current (-c)] {
   let repo_name: string = git config --get remote.origin.url | path basename;
   mut branch_name = $feature_name;
@@ -99,6 +107,7 @@ def _start-feature [feature_name: string, --dry (-d), --from-current (-c)] {
   if $dry == false {
     # nu -e $command |
     git worktree add -b $branch_name $folder $main_git_branch
+    _run-worktree-hook $repo_name $folder
     code $folder
   } else {
     print { "repo_name": $repo_name, "branch_name": $branch_name, "folder": $folder, "main_git_branch": $main_git_branch}
