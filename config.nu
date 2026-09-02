@@ -30,10 +30,10 @@ let dotfiles_path = $workspace_path | path join 'dotfiles';
 
 # https://matthiasportzel.com/brewfile/
 def _bbic [--cleanup (-c)] {
-  let path = $env.brewfile_path? | default $dotfiles_path | path join $"brewfile.home.rb";
-  print $"--file=(_brewfile_path)"
+  let path = $env.brewfile_path? | default ($dotfiles_path | path join 'brewfile.home.rb');
+  print $"--file=($path)"
   brew update
-  brew bundle install --file=(_brewfile_path) ...(if $cleanup { [--cleanup --force] } else { [] })
+  brew bundle install --file=($path) ...(if $cleanup { [--cleanup --force] } else { [] })
   brew upgrade
 }
 
