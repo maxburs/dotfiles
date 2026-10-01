@@ -6,6 +6,7 @@
   helper = 
   # https://github.com/git-ecosystem/git-credential-manager
   helper = /usr/local/share/gcm-core/git-credential-manager
+	azreposCredentialType = oauth
 [credential "https://dev.azure.com"]
   useHttpPath = true
 [core]

@@ -1,3 +1,9 @@
+# Copilot agent / CI shells need a POSIX shell (bash-style &&, ||, export, etc.).
+# The agent's terminal sets COPILOT_AGENT / AI_AGENT; hand off to zsh before any
+# nushell-specific setup runs. Interactive user terminals lack these vars and stay in nushell.
+if ($env.COPILOT_AGENT? | is-not-empty) or ($env.AI_AGENT? | is-not-empty) {
+    exec /bin/zsh -l
+}
 
 # See https://www.nushell.sh/book/configuration.html
 #
@@ -30,12 +36,12 @@ let workspace_path = '~/workspace' | path expand
 let worktrees_path =  $workspace_path | path join 'worktrees';
 let dotfiles_path = $workspace_path | path join 'dotfiles';
 
-let brewfile_path = $dotfiles_path | path join $"brewfile.($env.computer_type).rb";
-
 # https://matthiasportzel.com/brewfile/
 def _bbic [--cleanup (-c)] {
+  let path = $env.brewfile_path? | default ($dotfiles_path | path join 'brewfile.home.rb');
+  print $"--file=($path)"
   brew update
-  brew bundle install --file=($brewfile_path) ...(if $cleanup { [--cleanup --force] } else { [] })
+  brew bundle install --file=($path) ...(if $cleanup { [--cleanup --force] } else { [] })
   brew upgrade
 }
 
@@ -79,6 +85,14 @@ def _main-git-branch [] {
     | get main_branch
 }
 
+def _run-worktree-hook [repo_name: string, folder: string] {
+  let hooks = $env.worktree_hooks? | default {};
+  if ($repo_name in $hooks) {
+    cd $folder;
+    do ($hooks | get $repo_name)
+  }
+}
+
 def _start-feature [feature_name: string, --dry (-d), --from-current (-c)] {
   let repo_name: string = git config --get remote.origin.url | path basename;
   mut branch_name = $feature_name;
@@ -101,6 +115,7 @@ def _start-feature [feature_name: string, --dry (-d), --from-current (-c)] {
   if $dry == false {
     # nu -e $command |
     git worktree add -b $branch_name $folder $main_git_branch
+    _run-worktree-hook $repo_name $folder
     code $folder
   } else {
     print { "repo_name": $repo_name, "branch_name": $branch_name, "folder": $folder, "main_git_branch": $main_git_branch}
@@ -127,7 +142,7 @@ def _wt [branch?: string@_wto, --all (-a)] {
 if not (which fnm | is-empty) {
     ^fnm env --json | from json | load-env
 
-    $env.PATH = $env.PATH | prepend ($env.FNM_MULTISHELL_PATH | path join (if $nu.os-info.name == 'windows' {''} else {'bin'}))
+    $env.path = $env.path | prepend ($env.FNM_MULTISHELL_PATH | path join (if $nu.os-info.name == 'windows' {''} else {'bin'}))
     $env.config.hooks.env_change.PWD = (
         $env.config.hooks.env_change.PWD? | append {
             condition: {|| ['.nvmrc' '.node-version', 'package.json'] | any {|el| $el | path exists}}
