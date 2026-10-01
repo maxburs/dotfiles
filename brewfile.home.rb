@@ -3,9 +3,8 @@ add_shared_deps
 
 cask 'vlc'
 
-noUpdate do 
-  cask 'notion'
-end
+# noUpdate do 
+# end
 
 # Outdated, install v8 from website: https://1password.com/downloads/mac
 # mas '1Password', id: 1333542190
