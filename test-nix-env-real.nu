@@ -1,72 +1,97 @@
-# test-nix-env-real.nu — integration tests against real Nix state.
-# Skips cleanly if Nix isn't installed. Run:  nu ~/workspace/dotfiles/test-nix-env-real.nu
+# test-nix-env-real.nu — integration tests against the real Nix install.
+#
+# Checks that load-nix-env reproduces what bash itself gets from the same
+# profile script. Skips cleanly when no Nix profile script is found. Run with:
+#
+#   nu ~/workspace/dotfiles/test-nix-env-real.nu            # the script config.nu loads
+#   nu ~/workspace/dotfiles/test-nix-env-real.nu <script>   # a specific profile script
 
 const HERE = path self .
-source ($HERE | path join "nix-env.nu")
+use ($HERE | path join "nix-env.nu") *
 
-let script = "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"
-if not ($script | path exists) {
-    print "No Nix profile found; skipping real-state tests."
-    exit 0
+# Source guard set by nix-daemon.sh; nix.sh has none.
+const NIX_GUARD = "__ETC_PROFILE_NIX_SOURCED"
+
+# Variables Nix's profile scripts set. They are compared even when this shell
+# already has the same values, alongside whatever else the script changed.
+const NIX_VARS = [PATH NIX_PROFILES NIX_SSL_CERT_FILE XDG_DATA_DIRS]
+
+def --env check [actual, expected, name: string]: nothing -> nothing {
+    if $actual == $expected {
+        print $"  ok   ($name)"
+        $env.TESTS_PASSED += 1
+    } else {
+        print $"  FAIL ($name): expected ($expected | to nuon), got ($actual | to nuon)"
+        $env.TESTS_FAILED += 1
+    }
 }
 
-mut passed = 0
-mut failed = 0
-def assert [cond: bool, name: string]: nothing -> bool {
-    if $cond { print $"  ok   ($name)"; true } else { print $"  FAIL ($name)"; false }
+# Bash's exported environment, after sourcing `script` if one is given.
+def bash-env [script?: string]: nothing -> record {
+    ^bash -c '[ -z "$1" ] || . "$1" >/dev/null 2>&1; env -0' bash ($script | default "") | parse-env0
 }
 
-# Ground truth: what bash produces from the same script.
-#
-# nix-daemon.sh guards itself with __ETC_PROFILE_NIX_SOURCED. Once load-nix-env
-# has run, that guard lives in our env and is inherited by any child bash,
-# which makes the script a no-op there and turns these comparisons into
-# `$env.PATH == $env.PATH`. Unset the guard so the child does real work.
-def bash-var [script: string, v: string]: nothing -> string {
-    bash -c 'unset __ETC_PROFILE_NIX_SOURCED; . "$1"; printf "%s" "${!2}"' bash $script $v
+def main [
+    script?: path  # profile script to test (default: the one load-nix-env picks)
+]: nothing -> nothing {
+    let target = (resolve-nix-script $script)
+    if $target == null {
+        if $script != null {
+            error make { msg: $"not a readable file: ($script)" }
+        }
+        print "No Nix profile script found; skipping real-Nix tests."
+        exit 0
+    }
+    print $"Testing ($target)"
+
+    $env.TESTS_PASSED = 0
+    $env.TESTS_FAILED = 0
+
+    # Start both sides from the same state. If this shell already loaded Nix
+    # (the usual case, since config.nu does it at startup), nix-daemon.sh's
+    # guard is in our env and would turn the script into a no-op in every
+    # child bash, reducing each comparison to `$env.PATH == $env.PATH`.
+    # load-nix-env ignores BASH_ENV, so the reference bash must too.
+    hide-env --ignore-errors $NIX_GUARD BASH_ENV
+
+    # Ground truth, captured before load-nix-env changes our environment.
+    let baseline = (bash-env)
+    let expected = (bash-env $target)
+    let changed = ($expected | columns | where { |k| ($baseline | get -o $k) != ($expected | get $k) })
+
+    load-nix-env $target
+
+    # 1. Parity with bash for the Nix variables and anything else the script
+    #    changed; null on both sides means unset in both.
+    check ($changed | is-not-empty) true "sourcing changes something in bash (comparison is not vacuous)"
+    for v in ($NIX_VARS | append $changed | uniq) {
+        let got = if $v == "PATH" { $env.PATH | str join (char esep) } else { $env | get -o $v }
+        check $got ($expected | get -o $v) $"($v) matches bash"
+    }
+
+    # 2. The result works: nix resolves, and the cert file, if set, exists.
+    check (which nix | is-not-empty) true "nix resolvable on PATH"
+    if $env.NIX_SSL_CERT_FILE? != null {
+        check ($env.NIX_SSL_CERT_FILE | path exists) true "NIX_SSL_CERT_FILE exists"
+    }
+
+    # 3. The script added no empty PATH entries. An inherited empty entry is
+    #    kept, as in bash, so compare against the baseline instead of zero.
+    let count_empty = { |entries| $entries | where { |p| ($p | str trim) == "" } | length }
+    let empties_before = (do $count_empty ($baseline.PATH | split row (char esep)))
+    check (do $count_empty $env.PATH) $empties_before "no empty PATH entries introduced"
+
+    # 4. Reloading is a no-op thanks to the source guard. nix.sh has no guard,
+    #    so reloading it prepends duplicates (in bash too); skip it there.
+    if (open --raw $target | decode utf-8 | str contains $NIX_GUARD) {
+        let path_before_reload = $env.PATH
+        load-nix-env $target
+        check $env.PATH $path_before_reload "reloading leaves PATH unchanged"
+    } else {
+        print $"  skip reload check: ($target | path basename) has no source guard"
+    }
+
+    print $"\n($env.TESTS_PASSED) passed, ($env.TESTS_FAILED) failed"
+    if $env.TESTS_FAILED > 0 { exit 1 }
 }
-
-# The comparison must be symmetric. If this shell already has Nix loaded (the
-# usual case — config.nu does it at startup), the guard is in our env and
-# load-nix-env's child bash would no-op while bash-var's child re-runs the
-# script and re-prepends its entries. Drop the guard here so both sides start
-# from the same state and both do real work.
-hide-env --ignore-errors __ETC_PROFILE_NIX_SOURCED
-
-# Capture expectations BEFORE mutating our own environment, so the child bash
-# starts from the same state load-nix-env will see.
-let vars = [PATH NIX_PROFILES NIX_SSL_CERT_FILE XDG_DATA_DIRS]
-let expected = ($vars | reduce --fold {} { |v, acc| $acc | upsert $v (bash-var $script $v) })
-
-load-nix-env $script
-
-# 1. PATH parity: Nu list rejoined matches bash PATH order exactly.
-let got_path = ($env.PATH | str join (char esep))
-if (assert ($got_path == $expected.PATH) "PATH matches bash exactly") { $passed += 1 } else { $failed += 1 }
-
-# 2. Other key vars match bash verbatim.
-for v in ($vars | where { |v| $v != "PATH" }) {
-    if (assert (($env | get -o $v) == ($expected | get $v)) $"($v) matches bash") { $passed += 1 } else { $failed += 1 }
-}
-
-# 3. nix tooling actually resolves on PATH.
-if (assert ((which nix | length) > 0) "nix resolvable on PATH") { $passed += 1 } else { $failed += 1 }
-
-# 4. SSL cert file actually exists.
-if (assert ($env.NIX_SSL_CERT_FILE | path exists) "cert file exists") { $passed += 1 } else { $failed += 1 }
-
-# 5. No empty PATH entries leaked in.
-if (assert (($env.PATH | where {|p| ($p | str trim) == ""} | length) == 0) "no empty PATH entries") { $passed += 1 } else { $failed += 1 }
-
-# 6. Idempotent: reloading yields an identical PATH (no growth, no reorder).
-let p1 = $env.PATH
-load-nix-env $script
-if (assert ($env.PATH == $p1) "idempotent PATH") { $passed += 1 } else { $failed += 1 }
-
-# 7. The guard nix-daemon.sh sets was actually imported — this is what makes
-#    repeated loads cheap, and what test 0's `unset` above compensates for.
-if (assert ($env.__ETC_PROFILE_NIX_SOURCED? == "1") "nix source guard imported") { $passed += 1 } else { $failed += 1 }
-
-print $"\n($passed) passed, ($failed) failed"
-if $failed > 0 { exit 1 }
 
