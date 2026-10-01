@@ -16,7 +16,7 @@ source ("~/.cargo/env.nu" | path expand)
 $env.path ++= ['/usr/local/bin', '/opt/homebrew/bin']
 
 
-use ./nix-env.nu load-nix-env
+use ./nix/nix-env.nu load-nix-env
 try { load-nix-env } catch { |err| print -e $err.rendered }
 
 $env.PROMPT_COMMAND_RIGHT = ""
