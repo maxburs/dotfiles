@@ -12,7 +12,7 @@
 #
 # Usage, from config.nu:
 #
-#   use ./nix-env.nu load-nix-env
+#   use ./nix/nix-env.nu load-nix-env
 #   load-nix-env
 #
 # Optionally pass a specific script. Unlike the default search, an explicit
@@ -90,9 +90,9 @@ export def resolve-nix-script [
 # Load a POSIX profile script's environment into Nushell.
 #
 # Raises, leaving the environment untouched, if an explicit `script` is not a
-# readable file or if bash does not finish sourcing the script (it called
-# `exit` or `exec`, or tripped `set -e` or `set -u`). With no script given and
-# none found, prints a note and does nothing.
+# readable file, or if bash fails before it finishes sourcing the script (e.g.
+# the script called `exit` or `exec`, or tripped `set -e` or `set -u`). With no
+# script given and none found, prints a note and does nothing.
 #
 # Known limitations of running the script in a captured child bash:
 # - TTY checks such as `[ -t 2 ]` see a pipe, so TTY-only messages are skipped.
@@ -105,7 +105,10 @@ export def --env load-nix-env [
 
     if $target == null {
         if $script != null {
-            error make { msg: $"load-nix-env: not a readable file: ($script)" }
+            error make {
+                msg: $"load-nix-env: not a readable file: ($script)"
+                label: {text: "missing, not a file, or unreadable", span: (metadata $script).span}
+            }
         }
         print -e "load-nix-env: no Nix profile script found; skipping."
         return
@@ -152,10 +155,19 @@ export def --env load-nix-env [
     # `complete` returns binary when any byte is not valid UTF-8; decode it
     # lossily rather than fail. Expect [before, after, rest]: anything after
     # the closing marker (e.g. output from an EXIT trap the script set) is
-    # ignored.
+    # ignored. One part means bash failed before sourcing; two, while sourcing.
     let snapshots = ($capture.stdout | into binary | decode utf-8 | split row $ENV_SNAPSHOT_SEP)
+    if ($snapshots | length) < 2 {
+        error make --unspanned {
+            msg: $"load-nix-env: bash could not snapshot its environment \(exit code ($capture.exit_code)\); environment not imported."
+            help: "load-nix-env runs `env -0` in bash; check that `env` is on PATH."
+        }
+    }
     if ($snapshots | length) < 3 {
-        error make { msg: $"load-nix-env: bash did not finish sourcing ($target) \(exit code ($capture.exit_code)\); environment not imported." }
+        error make --unspanned {
+            msg: $"load-nix-env: bash did not finish sourcing ($target) \(exit code ($capture.exit_code)\); environment not imported."
+            help: "The script stopped early (exit, exec, set -e or set -u); anything it printed is above."
+        }
     }
     let before = ($snapshots.0 | parse-env0)
     let after = ($snapshots.1 | parse-env0)

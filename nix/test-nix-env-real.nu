@@ -3,11 +3,12 @@
 # Checks that load-nix-env reproduces what bash itself gets from the same
 # profile script. Skips cleanly when no Nix profile script is found. Run with:
 #
-#   nu ~/workspace/dotfiles/test-nix-env-real.nu            # the script config.nu loads
-#   nu ~/workspace/dotfiles/test-nix-env-real.nu <script>   # a specific profile script
+#   nu ~/workspace/dotfiles/nix/test-nix-env-real.nu            # the script config.nu loads
+#   nu ~/workspace/dotfiles/nix/test-nix-env-real.nu <script>   # a specific profile script
 
 const HERE = path self .
 use ($HERE | path join "nix-env.nu") *
+use std/assert
 
 # Source guard set by nix-daemon.sh; nix.sh has none.
 const NIX_GUARD = "__ETC_PROFILE_NIX_SOURCED"
@@ -58,19 +59,20 @@ def main [
     let baseline = (bash-env)
     let expected = (bash-env $target)
     let changed = ($expected | columns | where { |k| ($baseline | get -o $k) != ($expected | get $k) })
+    assert ($changed | is-not-empty) $"Sourcing ($target) changed nothing in bash, so the comparisons below would be vacuous"
 
     load-nix-env $target
 
     # 1. Parity with bash for the Nix variables and anything else the script
     #    changed; null on both sides means unset in both.
-    check ($changed | is-not-empty) true "sourcing changes something in bash (comparison is not vacuous)"
     for v in ($NIX_VARS | append $changed | uniq) {
         let got = if $v == "PATH" { $env.PATH | str join (char esep) } else { $env | get -o $v }
         check $got ($expected | get -o $v) $"($v) matches bash"
     }
 
-    # 2. The result works: nix resolves, and the cert file, if set, exists.
-    check (which nix | is-not-empty) true "nix resolvable on PATH"
+    # 2. The cert file, if set, exists. (Whether nix itself is on PATH isn't
+    #    checked: the shell running these tests usually has it already, so it
+    #    would pass regardless. PATH parity above covers it.)
     if $env.NIX_SSL_CERT_FILE? != null {
         check ($env.NIX_SSL_CERT_FILE | path exists) true "NIX_SSL_CERT_FILE exists"
     }

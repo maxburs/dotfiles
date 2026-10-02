@@ -1,5 +1,5 @@
 # test-nix-env.nu — unit tests for nix-env.nu, using synthetic profile scripts.
-# Run with:  nu ~/workspace/dotfiles/test-nix-env.nu
+# Run with:  nu ~/workspace/dotfiles/nix/test-nix-env.nu
 #
 # Real-Nix integration coverage lives in test-nix-env-real.nu.
 #
@@ -13,6 +13,11 @@
 const HERE = path self .
 const MODULE = ($HERE | path join "nix-env.nu")
 use $MODULE *
+use std/assert
+
+# check (below) records a failure and moves on; assert is for preconditions
+# that make the remaining tests meaningless when they fail.
+assert (which bash | is-not-empty) "bash is required"
 
 # Keep the reference bash runs below hermetic; Test 15 sets BASH_ENV itself.
 hide-env --ignore-errors BASH_ENV
@@ -73,8 +78,8 @@ export PATH="/nix/x/bin:$PATH"
     # --- Test 2: explicit nonexistent path errors, no silent fallback ---
     # Regression: this used to fall through to the real Nix profile and quietly
     # load it, so the "missing script" branch was never exercised.
-    let missing_errored = (try { load-nix-env "/no/such/file.sh"; false } catch { true })
-    check $missing_errored true "explicit missing script raises"
+    let missing_error = (try { load-nix-env "/no/such/file.sh"; null } catch { |e| $e.msg })
+    check $missing_error "load-nix-env: not a readable file: /no/such/file.sh" "explicit missing script raises"
     check $env.FOO? "bar" "missing script does not clobber env"
 
     # --- Test 3: resolution logic ---
@@ -116,7 +121,7 @@ export PATH="/nix/x/bin:$PATH"
 [ -e /definitely/not/here ] && export EXTRA=1
 ')
     let bash_status = (do { ^bash -c '. "$1"' bash $trailing } | complete | get exit_code)
-    check $bash_status 1 "fixture really does exit nonzero under bash"
+    assert equal $bash_status 1 "trailing.sh must exit nonzero under bash for Test 7 to mean anything"
     load-nix-env $trailing
     check $env.TOOL_HOME? "/opt/tool" "nonzero trailing status still imports"
 
@@ -170,10 +175,10 @@ print $env.NOISY_IMPORT
     for case in ($early_exits | transpose name body) {
         let script = (make-script $workdir $"early ($case.name).sh" $case.body)
         let probe = (do {
-            let errored = (try { load-nix-env $script; false } catch { true })
-            {errored: $errored, core: [$env.PWD? $env.HOME? $env.PATH?], early: $env.EARLY?}
+            let error = (try { load-nix-env $script; null } catch { |e| $e.msg })
+            {error: $error, core: [$env.PWD? $env.HOME? $env.PATH?], early: $env.EARLY?}
         })
-        check $probe.errored true $"($case.name): raises"
+        check ($probe.error | default "" | str contains "did not finish sourcing") true $"($case.name): raises 'did not finish sourcing'"
         check $probe.core [$env.PWD $env.HOME $env.PATH] $"($case.name): PWD, HOME, PATH intact"
         check $probe.early null $"($case.name): nothing imported"
     }
@@ -234,6 +239,19 @@ print $env.NOISY_IMPORT
     let login_errored = (try { load-nix-env $login_like; false } catch { true })
     check $login_errored false "EXIT-trap output after the final snapshot is ignored"
     check $env.ARGC? "0" "script sees no positional arguments"
+
+    # --- Test 17: a failure before sourcing is reported as such ---
+    # Regression: it used to say "did not finish sourcing". With only bash on
+    # PATH, bash can't find `env` for the first snapshot. Isolated so the bare
+    # PATH doesn't leak.
+    let bash_only = ($workdir | path join "bash-only")
+    mkdir $bash_only
+    ^ln -s (which bash | get 0.path) ($bash_only | path join "bash")
+    let no_env_error = (do {
+        $env.PATH = [$bash_only]
+        try { load-nix-env $tmp; null } catch { |e| $e.msg }
+    })
+    check ($no_env_error | default "" | str contains "could not snapshot") true "failure before sourcing is reported as such"
 } catch { |err|
     # Unexpected error: clean up, then report it as a failure.
     rm -rf $workdir
