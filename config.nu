@@ -39,8 +39,10 @@ use std/util "path add"
 $env.config.show_banner = false
 $env.config.buffer_editor = ['code' '--wait']
 
-# Rust/Cargo
-source ("~/.cargo/env.nu" | path expand)
+# Rust/Cargo, if installed. Sourcing a missing file is a parse error that would
+# skip this whole config; `source null` is a no-op.
+const cargo_env = ("~/.cargo/env.nu" | path expand)
+source (if ($cargo_env | path exists) { $cargo_env })
 
 path add /usr/local/bin /opt/homebrew/bin
 
