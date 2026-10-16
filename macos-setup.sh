@@ -34,4 +34,12 @@ brew install --cask \
 
 mkdir ~/.nvm
 
-nu -e '"source ~/workspace/dotfiles/config.nu" | save $env.config-path'
+
+nu -c '
+  let line = "source ~/workspace/dotfiles/config.nu"
+  let cfg = $nu.config-path
+  if not ($cfg | path exists) or ($line not-in (open --raw $cfg | lines)) {
+    mkdir ($cfg | path dirname)
+    $"\n($line)\n" | save --append $cfg
+  }
+'
