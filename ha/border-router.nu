@@ -1,5 +1,4 @@
-# border-router-errors.nu — list the errors in a log from Home Assistant's
-# OpenThread Border Router add-on, with their local times.
+# The OpenThread Border Router add-on's log: its errors, with their local times.
 #
 # otbr-agent stamps OpenThread's log lines, the ones read here, with its uptime
 # (`HH:MM:SS.mmm`, or `<days>d.HH:MM:SS.mmm` after the first day) rather than
@@ -8,12 +7,9 @@
 # ...`), so uptimes are added to the last of those. An uptime lower than the one
 # before it means otbr-agent restarted. Home Assistant runs add-ons in its
 # configured time zone, which is assumed to be this machine's.
-#
-# Usage:
-#   nu border-router-errors.nu                     # reads ./border-router-logs.txt
-#   nu border-router-errors.nu path/to/log.txt
-#   nu border-router-errors.nu --since 2026-10-10  # errors from local midnight on
-#   nu border-router-errors.nu --daily             # error counts per day, by kind
+
+use _data.nu [BORDER_ROUTER_LOG]
+use _time.nu [TIME_FORMAT count-by-day]
 
 # A full timestamp, or an otbr-agent line: uptime, level, module (padded with
 # dashes), and message.
@@ -31,13 +27,13 @@ const ERROR_PATTERN = '(?i)fail|error'
 # reason after "failed: ". E.g. NoAck or ChannelAccessFailure.
 const KIND_PATTERN = '(?:error:|failed: )(?<kind>\w+)'
 
-const TIME_FORMAT = '%Y-%m-%d %a %H:%M:%S'
-
-def main [
-  path: path = './border-router-logs.txt'
+# List the border router's errors with their local times, from the downloaded
+# log or the one at `path`.
+export def errors [
+  path: path = $BORDER_ROUTER_LOG
   --since: string  # only errors from this local time on, e.g. 2026-10-10 or '2026-10-10 18:00'
-  --daily          # count errors per day instead of listing them
-] {
+  --daily          # count errors per day, by kind, instead of listing them
+]: nothing -> table {
   let since = if $since != null { $since | into datetime }
   let lines = parse-log $path
   let runs = agent-runs $lines (ls $path | get 0.modified)
@@ -65,7 +61,14 @@ def main [
     print -e $"Note: ($estimate)"
   }
   if $daily {
-    daily-counts $errors ($since | default ($timed | first).time) ($timed | last).time
+    let rows = $errors | each {|e| {
+      time: $e.time
+      column: ($e.message | parse --regex $KIND_PATTERN | get -o 0.kind | default 'other')
+    } }
+    # The most common kinds first, but 'other' last.
+    let kinds = $rows | each { $in.column } | uniq --count | sort-by count --reverse | each { $in.value }
+    let kinds = ($kinds | where $it != 'other') ++ ($kinds | where $it == 'other')
+    count-by-day $rows $kinds ($since | default ($timed | first).time) ($timed | last).time
   } else {
     $errors | select time level module message | update time { format date $TIME_FORMAT }
   }
@@ -149,30 +152,4 @@ def agent-runs [lines: table, saved: datetime]: nothing -> table {
 # today's UTC offset for every date, so it's an hour off across a DST change.
 def to-local []: datetime -> datetime {
   into int | into datetime --timezone local
-}
-
-# Errors per local day from `first` to `last`, so days without errors show up
-# as 0, with a column per kind of error.
-def daily-counts [errors: table, first: datetime, last: datetime]: nothing -> table {
-  let first_day = $first | format date '%Y-%m-%d'
-  let last_day = $last | format date '%Y-%m-%d'
-  # seq date counts down when the end is before the beginning.
-  if $first_day > $last_day { return [] }
-
-  let errors = $errors | insert kind {|e|
-    $e.message | parse --regex $KIND_PATTERN | get -o 0.kind | default 'other'
-  }
-  let kinds = $errors | get -o kind | uniq --count | sort-by count --reverse | get -o value
-  let kinds = ($kinds | where $it != 'other') ++ ($kinds | where $it == 'other')
-  let by_day = $errors | group-by { $in.time | format date '%Y-%m-%d' }
-
-  seq date --begin-date $first_day --end-date $last_day
-  | each {|day|
-      let day_errors = $by_day | get -o $day | default []
-      $kinds
-      | reduce --fold {date: ($day | into datetime | format date '%Y-%m-%d %a')} {|kind, row|
-          $row | insert $kind ($day_errors | where kind == $kind | length)
-        }
-      | insert total ($day_errors | length)
-    }
 }

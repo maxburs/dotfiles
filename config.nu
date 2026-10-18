@@ -36,6 +36,9 @@ _read-env-dir | load-env
 use std/assert
 use std/util "path add"
 
+# Load modules from this repo by name, from any folder: `use ha`.
+const NU_LIB_DIRS = $NU_LIB_DIRS ++ [(path self .)]
+
 $env.config.show_banner = false
 $env.config.buffer_editor = ['code' '--wait']
 
