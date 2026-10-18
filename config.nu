@@ -1,11 +1,37 @@
 # https://www.nushell.sh/book/configuration.html
 
+const env_dir = ($nu.home-dir | path join '.env')
+
+# ~/.env/<NAME> holds the value of env var NAME.
+def _read-env-dir []: nothing -> record {
+  if ($env_dir | path type) != 'dir' { return {} }
+  let entries = ls $env_dir
+    | insert key {|f| $f.name | path basename }
+    | insert problem {|f|
+        if $f.type != file {
+          $"is a ($f.type), not a file"
+        } else if $f.key !~ '^[A-Za-z_][A-Za-z0-9_]*$' {
+          'is not a valid env var name'
+        }
+      }
+  for f in ($entries | where problem != null) {
+    print -e $"Skipping ($f.name): ($f.problem)"
+  }
+  $entries
+    | where problem == null
+    | reduce -f {} {|f, acc| $acc | upsert $f.key (open --raw $f.name | str trim) }
+}
+
 # Copilot agent / CI shells need a POSIX shell (bash-style &&, ||, export, etc.).
 # The agent's terminal sets COPILOT_AGENT / AI_AGENT; hand off to zsh before any
 # nushell-specific setup runs. Interactive user terminals lack these vars and stay in nushell.
+# ~/.env vars can be inherited (e.g. VS Code launched via `code` from nushell), so strip them.
 if ($env.COPILOT_AGENT? | is-not-empty) or ($env.AI_AGENT? | is-not-empty) {
+    hide-env --ignore-errors ...(_read-env-dir | columns)
     exec /bin/zsh -l
 }
+
+_read-env-dir | load-env
 
 use std/assert
 use std/util "path add"
@@ -13,8 +39,10 @@ use std/util "path add"
 $env.config.show_banner = false
 $env.config.buffer_editor = ['code' '--wait']
 
-# Rust/Cargo
-source ("~/.cargo/env.nu" | path expand)
+# Rust/Cargo, if installed. Sourcing a missing file is a parse error that would
+# skip this whole config; `source null` is a no-op.
+const cargo_env = ("~/.cargo/env.nu" | path expand)
+source (if ($cargo_env | path exists) { $cargo_env })
 
 path add /usr/local/bin /opt/homebrew/bin
 
@@ -239,6 +267,22 @@ def _wt [branch?: string@_wto, --all (-a)] {
   let folders = if $all { _wto } else { [$branch] }
   for folder in $folders {
     code ($worktrees_path | path join $folder)
+  }
+}
+
+def _projects [] {
+  ls $workspace_path | each {|folder| $folder.name | path basename }
+}
+
+def _p [project: string@_projects] {
+  let path = ($workspace_path | path join $project)
+  let type = $path | path type
+  if $type == null {
+    print -e $'($path) does not exist'
+  } else if $type != 'dir' {
+    print -e $'($path) is type $($type)'
+  } else {
+    code $path
   }
 }
 
