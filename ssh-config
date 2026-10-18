@@ -1,0 +1,7 @@
+# man ssh_config
+# Update ~/.ssh/config with `Include ~/workspace/dotfiles/ssh-config`
+Host ha-yellow
+	HostName homeassistant.local
+  User root
+  Port 22
+	IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
