@@ -242,6 +242,11 @@ def _wt [branch?: string@_wto, --all (-a)] {
   }
 }
 
+# Init development flake
+def _make-flake [] {
+  nix run "https://flakehub.com/f/DeterminateSystems/fh/*" -- init
+}
+
 # https://github.com/Schniz/fnm/issues/463#issuecomment-4381417804
 if (which fnm | is-not-empty) {
     ^fnm env --json | from json | load-env
