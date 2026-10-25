@@ -1,3 +1,5 @@
+# Exclude workspace from spotlight search: Settings->Spotlight->Privacy
+
 # Install command line tools (includes git)
 xcode-select --install
 
