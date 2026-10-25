@@ -9,18 +9,22 @@ export const MATTER_LOG = ($DATA | path join matter.log)
 # list of {node, name}.
 export const NODE_NAMES = 'matter-nodes.json'
 
+const host = 'ha-yellow'
+
 # Download the border router's and Matter Server's logs, and the Matter
 # devices' names, from Home Assistant into data/, replacing the last download.
 # Runs the `ha` CLI over ssh, so the host needs it, as the Terminal & SSH
 # add-on has.
 export def download [
-  --host: string = 'ha-yellow'  # ssh host; see ssh-config
+  --logs: int,
+  --logs-border-router = 10000,
+  --logs-matter-server = 50_000,
 ]: nothing -> table {
   mkdir $DATA
   let logs = [
     [app lines path];
-    [core_openthread_border_router 10000 $BORDER_ROUTER_LOG]
-    [core_matter_server 50000 $MATTER_LOG]
+    [core_openthread_border_router ($logs | default $logs_border_router) $BORDER_ROUTER_LOG]
+    [core_matter_server ($logs | default $logs_matter_server) $MATTER_LOG]
   ]
   | each {|log|
       let text = ssh-output $host $"ha apps logs ($log.app) --lines ($log.lines)"
