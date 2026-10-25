@@ -8,7 +8,7 @@
 # before it means otbr-agent restarted. Home Assistant runs add-ons in its
 # configured time zone, which is assumed to be this machine's.
 
-use _data.nu [BORDER_ROUTER_LOG]
+use _download.nu [BORDER_ROUTER_LOG]
 use _time.nu [TIME_FORMAT count-by-day]
 
 # A full timestamp, or an otbr-agent line: uptime, level, module (padded with

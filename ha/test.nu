@@ -26,6 +26,25 @@ def --env check [actual, expected, name: string]: nothing -> nothing {
   }
 }
 
+# Run `ha download <args>` in the module copy at `module`, with `bin` first on
+# PATH, after clearing its data/. Returns the files it saved, by name (logs as
+# text, JSON parsed), and its error if it failed.
+def download-in [module: path, bin: path, args: string]: nothing -> record {
+  let data = $module | path join data
+  rm -rf $data
+  let result = with-env {PATH: ($env.PATH | prepend $bin)} {
+    ^$nu.current-exe -n -c $"use ($module); ha download ($args) | ignore" | complete
+  }
+  let files = if ($data | path exists) { ls $data } else { [] }
+  {
+    files: ($files | reduce --fold {} {|f, all|
+      let name = $f.name | path basename
+      $all | insert $name (if ($name | str ends-with '.json') { open $f.name } else { open --raw $f.name | str trim })
+    })
+    error: (if $result.exit_code != 0 { $result.stderr | ansi strip })
+  }
+}
+
 let workdir = mktemp -d
 
 try {
@@ -119,6 +138,42 @@ try {
     {from: '2026-11-02 Mon', outages: 0, down: 12hr}
   ] "ha matter downtime --bin 1day: local days, across a DST change"
   check (try { ha matter downtime $matter_log --bin 36hr; 'no error' } catch {|e| $e.msg }) '--bin must be a whole number of days' "ha matter downtime --bin: whole days only"
+
+  # `ha download` saves into its own module's data/, so it runs in a copy of
+  # the module, with a stand-in ssh that prints the command it was given, or a
+  # device registry with one Matter device for `cat`.
+  let module = $workdir | path join ha
+  mkdir $module
+  glob ($HERE | path join '*.nu') | each {|f| cp $f $module } | ignore
+  let bin = $workdir | path join bin
+  mkdir $bin
+  let registry = {data: {devices: [
+    {identifiers: [[matter deviceid_E6CE0CDD66449486-0000000000000012-MatterNodeDevice]], name: 'BILRESA dual button', name_by_user: $switch}
+    {identifiers: [[hue bridge]], name: 'Hue bridge', name_by_user: null}
+  ]}} | to json --raw
+  [
+    '#!/bin/sh'
+    'case "$2" in'
+    ("  cat*) echo '" + $registry + "' ;;")
+    '  *) echo "$2" ;;'
+    'esac'
+  ] | str join "\n" | save ($bin | path join ssh)
+  ^chmod +x ($bin | path join ssh)
+
+  check (download-in $module $bin '') {
+    files: {
+      core_openthread_border_router.log: 'ha apps logs core_openthread_border_router --lines 10000'
+      core_matter_server.log: 'ha apps logs core_matter_server --lines 50000'
+      matter-nodes.json: [{node: 18, name: $switch}]
+    }
+    error: null
+  } "ha download: both add-ons' logs, named by slug, and the Matter devices' names"
+  check (download-in $module $bin 'core_openthread_border_router --logs 5') {
+    files: {core_openthread_border_router.log: 'ha apps logs core_openthread_border_router --lines 5'}
+    error: null
+  } "ha download <add-on> --logs: just that log, without the device names"
+  let unknown = download-in $module $bin 'core_openthread_border_router nope'
+  check {files: $unknown.files, unknown: ($unknown.error | str contains 'Unknown add-on: nope')} {files: {}, unknown: true} "ha download: an unknown add-on downloads nothing"
 } catch { |err|
   # Unexpected error: clean up, then report it as a failure.
   rm -rf $workdir

@@ -15,7 +15,7 @@
 # come from the matter-nodes.json that `ha download` saves next to the log.
 # Matter Server logs in Home Assistant's time zone, like the border router.
 
-use _data.nu [MATTER_LOG NODE_NAMES]
+use _download.nu [MATTER_LOG NODE_NAMES]
 use _time.nu [TIME_FORMAT DAY_FORMAT count-by-day]
 
 const TIME_PATTERN = '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}'
