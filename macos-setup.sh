@@ -9,8 +9,10 @@ xcode-select --install
 # rm -rf ~/.gitconfig
 # ln ./.gitconfig ~/.gitconfig
 
-# rm -rf ~/.gitconfig
 # ln ./.default-npm-packages ~/.default-npm-packages
+
+# mkdir -p ~/.config/zed
+# ln ./zed-settings.json ~/.config/zed/settings.json
 
 # Use git-credential-manager instead
 # git config --global credential.helper osxkeychain
