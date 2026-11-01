@@ -1,0 +1,100 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+  "cli_default_open_behavior": "new_window",
+  "bottom_dock_layout": "contained",
+  "format_on_save": "on",
+  "terminal": {
+    "max_scroll_history_lines": 10000,
+  },
+  "git": {
+    "inline_blame": {
+      "enabled": true,
+    },
+  },
+  "minimap": {
+    "show": "never",
+  },
+  "cursor_blink": false,
+  "window_title_format": "${projectName}${separator}${fileName}${separator}",
+  "autosave": "on_focus_change",
+  "buffer_font_fallbacks": ["Menlo", "Monaco", "Courier New", "monospace"],
+  "buffer_font_family": "Berkeley Mono",
+  "show_whitespaces": "none",
+  "show_edit_predictions": true,
+  "wrap_guides": [80],
+  "soft_wrap": "editor_width",
+  "tab_size": 2,
+  "base_keymap": "VSCode",
+  "project_panel": {
+    "dock": "left",
+  },
+  "outline_panel": {
+    "dock": "left",
+  },
+  "collaboration_panel": {
+    "dock": "left",
+  },
+  "agent": {
+    "sandbox_permissions": {
+      "allow_unsandboxed": true,
+      "allow_all_hosts": true,
+    },
+    "default_model": {
+      "provider": "copilot_chat",
+      "model": "claude-opus-5.5",
+      "enable_thinking": true,
+      "effort": "max",
+    },
+    "dock": "right",
+    "favorite_models": [
+      {
+        "provider": "copilot_chat",
+        "model": "claude-opus-5.5",
+        "enable_thinking": true,
+        "effort": "max"
+      },
+      {
+        "provider": "copilot_chat",
+        "model": "gpt-6-astra",
+        "enable_thinking": true,
+        "effort": "high"
+      }
+    ],
+    "model_parameters": [],
+  },
+  "git_panel": {
+    "dock": "left",
+  },
+  "ui_font_size": 16,
+  "buffer_font_size": 15,
+  "theme": {
+    "mode": "system",
+    "light": "Ayu Light",
+    "dark": "VSCode Dark Modern",
+  },
+  // "languages": {
+  //   "JavaScript": {
+  //     "formatter": {
+  //       "external": {
+  //         "command": "prettier",
+  //         "arguments": ["--stdin-filepath", "{buffer_path}"]
+  //       }
+  //     }
+  //   },
+  //   "TypeScript": {
+  //     "formatter": {
+  //       "external": {
+  //         "command": "prettier",
+  //         "arguments": ["--stdin-filepath", "{buffer_path}"]
+  //       }
+  //     }
+  //   }
+  // }
+}
