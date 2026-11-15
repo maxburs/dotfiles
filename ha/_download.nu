@@ -1,10 +1,10 @@
-# `ha download`: add-ons' logs and the Matter devices' names, from Home
-# Assistant into data/ (gitignored), where the other commands read them by
-# default.
+# `ha download`: Home Assistant's logs, its own and its add-ons', and the
+# Matter devices' names, into data/ (gitignored), where the other commands
+# read them by default.
 
 const DATA = (path self . | path join data)
 
-# Each add-on's log is saved as data/<its slug>.log.
+# Each log is saved as data/<provider>.log.
 export const BORDER_ROUTER_LOG = ($DATA | path join core_openthread_border_router.log)
 export const MATTER_LOG = ($DATA | path join core_matter_server.log)
 
@@ -14,38 +14,51 @@ export const NODE_NAMES = 'matter-nodes.json'
 
 const host = 'ha-yellow'
 
-# The add-ons `download` gets logs from, by their slugs in Home Assistant, and
-# how many of their last lines it gets unless given --logs.
-const APPS = [
-  [app lines path];
-  [core_openthread_border_router 10_000 $BORDER_ROUTER_LOG]
-  [core_matter_server 50_000 $MATTER_LOG]
+# The logs `download` can get, as Settings > System > Logs lists them: a part
+# of Home Assistant, or an add-on by its slug. `lines` is how many of the last
+# lines it gets unless given --logs; they come at about 800 a second.
+const PROVIDERS = [
+  [provider                      title                      lines  command];
+  [core                          'Home Assistant Core'      10_000 'ha core logs']
+  [supervisor                    Supervisor                 10_000 'ha supervisor logs']
+  [host                          Host                       10_000 'ha host logs']
+  [dns                           DNS                        10_000 'ha dns logs']
+  [audio                         Audio                      10_000 'ha audio logs']
+  [multicast                     Multicast                  10_000 'ha multicast logs']
+  [core_matter_server            'Matter Server'            50_000 'ha apps logs core_matter_server']
+  [core_openthread_border_router 'OpenThread Border Router' 10_000 'ha apps logs core_openthread_border_router']
+  [core_ssh                      'Terminal & SSH'           10_000 'ha apps logs core_ssh']
 ]
 
-# Download add-ons' logs from Home Assistant into data/, replacing the last
-# download: the border router's and Matter Server's, or just the ones named.
-# The Matter devices' names come along with Matter Server's log. Runs the `ha`
-# CLI over ssh, so the host needs it, as the Terminal & SSH add-on has.
+# What `download` gets unless told which logs: the ones the other commands read.
+const DEFAULT_PROVIDERS = [core_openthread_border_router core_matter_server]
+
+# Download logs from Home Assistant into data/<provider>.log, replacing the
+# last download: the border router's and Matter Server's, or the ones named,
+# any that Settings > System > Logs lists. The Matter devices' names come
+# along with Matter Server's log. Runs the `ha` CLI over ssh, so the host
+# needs it, as the Terminal & SSH add-on has.
 export def download [
-  ...apps: string@app-names  # add-ons' slugs (default: all of them)
-  --logs: int                # lines to download of each log (default: 10000 of the border router's, 50000 of Matter Server's)
+  ...providers: string@provider-names  # which logs (default: the border router's and Matter Server's)
+  --logs: int                          # lines to download of each log (default: 50000 of Matter Server's, else 10000)
 ]: nothing -> table {
-  let apps = if ($apps | is-empty) { $APPS.app } else { $apps | uniq }
+  let providers = if ($providers | is-empty) { $DEFAULT_PROVIDERS } else { $providers | uniq }
   # All checked first, so a typo doesn't leave a partial download.
-  for app in $apps {
-    if $app not-in $APPS.app {
+  for provider in $providers {
+    if $provider not-in $PROVIDERS.provider {
       error make --unspanned {
-        msg: $"Unknown add-on: ($app)"
-        help: $"Download any of: ($APPS.app | str join ', ')"
+        msg: $"Unknown log: ($provider)"
+        help: $"Download any of: ($PROVIDERS.provider | str join ', ')"
       }
     }
   }
 
   mkdir $DATA
-  let saved = $APPS | where app in $apps | each {|log|
-    let text = ssh-output $host $"ha apps logs ($log.app) --lines ($logs | default $log.lines)"
-    $text | ansi strip | save --force $log.path
-    {file: $log.path, saved: $"($text | lines | length) lines"}
+  let saved = $PROVIDERS | where provider in $providers | each {|log|
+    let path = $DATA | path join $"($log.provider).log"
+    let text = ssh-output $host $"($log.command) --lines ($logs | default $log.lines)"
+    $text | ansi strip | save --force $path
+    {file: $path, saved: $"($text | lines | length) lines"}
   }
   if ($MATTER_LOG not-in $saved.file) { return $saved }
 
@@ -55,8 +68,10 @@ export def download [
   $saved | append {file: $names_path, saved: $"($names | length) Matter devices' names"}
 }
 
-def app-names []: nothing -> list<string> {
-  $APPS.app
+# Tab completions for download's logs, described as Settings > System > Logs
+# names them.
+def provider-names []: nothing -> list<record> {
+  $PROVIDERS | each {|p| {value: $p.provider, description: $p.title} }
 }
 
 # What `command` prints on `host`, or an error with what it printed to stderr.

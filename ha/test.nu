@@ -167,13 +167,20 @@ try {
       matter-nodes.json: [{node: 18, name: $switch}]
     }
     error: null
-  } "ha download: both add-ons' logs, named by slug, and the Matter devices' names"
+  } "ha download: the border router's and Matter Server's logs, named by slug, and the Matter devices' names"
   check (download-in $module $bin 'core_openthread_border_router --logs 5') {
     files: {core_openthread_border_router.log: 'ha apps logs core_openthread_border_router --lines 5'}
     error: null
-  } "ha download <add-on> --logs: just that log, without the device names"
+  } "ha download <log> --logs: just that log, without the device names"
+  check (download-in $module $bin 'host core_ssh') {
+    files: {
+      host.log: 'ha host logs --lines 10000'
+      core_ssh.log: 'ha apps logs core_ssh --lines 10000'
+    }
+    error: null
+  } "ha download <logs>: Home Assistant's own logs and other add-ons'"
   let unknown = download-in $module $bin 'core_openthread_border_router nope'
-  check {files: $unknown.files, unknown: ($unknown.error | str contains 'Unknown add-on: nope')} {files: {}, unknown: true} "ha download: an unknown add-on downloads nothing"
+  check {files: $unknown.files, unknown: ($unknown.error | str contains 'Unknown log: nope')} {files: {}, unknown: true} "ha download: an unknown log downloads nothing"
 } catch { |err|
   # Unexpected error: clean up, then report it as a failure.
   rm -rf $workdir
