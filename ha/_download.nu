@@ -88,17 +88,18 @@ def ssh-output [host: string, command: string]: nothing -> string {
 
 # Each Matter node's name, from Home Assistant's device registry: the name it
 # was given there, or else the device's own. The registry identifies a node as
-# `deviceid_<fabric>-<node ID in hex>-MatterNodeDevice`.
+# `deviceid_<fabric>-<node ID in hex>-MatterNodeDevice`, and a device that was
+# paired again keeps its entry, adding the new node's ID to the old one's, so
+# each of its node IDs gets its name.
 def matter-node-names []: record -> table {
   $in.data.devices
   | each {|device|
-      let ids = $device.identifiers
-        | where {|id| $id.0 == 'matter' }
-        | each {|id| $id.1 | parse --regex '^deviceid_[0-9A-F]+-(?<node>[0-9A-F]+)-MatterNodeDevice$' }
-        | flatten
-      if ($ids | is-not-empty) {
-        {node: ($ids.0.node | into int --radix 16), name: ($device.name_by_user | default $device.name)}
-      }
+      $device.identifiers
+      | where {|id| $id.0 == 'matter' }
+      | each {|id| $id.1 | parse --regex '^deviceid_[0-9A-F]+-(?<node>[0-9A-F]+)-MatterNodeDevice$' }
+      | flatten
+      | each {|id| {node: ($id.node | into int --radix 16), name: ($device.name_by_user | default $device.name)} }
     }
+  | flatten
   | sort-by node
 }

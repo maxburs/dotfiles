@@ -150,6 +150,8 @@ try {
   let registry = {data: {devices: [
     {identifiers: [[matter deviceid_E6CE0CDD66449486-0000000000000012-MatterNodeDevice]], name: 'BILRESA dual button', name_by_user: $switch}
     {identifiers: [[hue bridge]], name: 'Hue bridge', name_by_user: null}
+    # Paired again as node 0x14: the registry keeps both nodes' IDs.
+    {identifiers: [[matter deviceid_E6CE0CDD66449486-0000000000000014-MatterNodeDevice] [matter deviceid_E6CE0CDD66449486-0000000000000013-MatterNodeDevice] [matter serial_103597000014531A]], name: 'BILRESA dual button', name_by_user: null}
   ]}} | to json --raw
   [
     '#!/bin/sh'
@@ -164,7 +166,7 @@ try {
     files: {
       core_openthread_border_router.log: 'ha apps logs core_openthread_border_router --lines 10000'
       core_matter_server.log: 'ha apps logs core_matter_server --lines 50000'
-      matter-nodes.json: [{node: 18, name: $switch}]
+      matter-nodes.json: [{node: 18, name: $switch} {node: 19, name: 'BILRESA dual button'} {node: 20, name: 'BILRESA dual button'}]
     }
     error: null
   } "ha download: the border router's and Matter Server's logs, named by slug, and the Matter devices' names"
