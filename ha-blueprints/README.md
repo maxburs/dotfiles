@@ -14,19 +14,26 @@ on it:
 
 ## Set up
 
-1. Create a long-lived access token in your Home Assistant profile, under
-   **Security**, and store it in the macOS Keychain. Running this prompts for
-   the token, so it stays out of your shell history:
-
-   ```sh
-   security add-generic-password -s ha-yellow -a home-assistant -w
-   ```
+1. Set up the uploader. It reads a Home Assistant token from 1Password:
+   1. Install the 1Password CLI with `brew install --cask 1password-cli`
+      (listed in [brewfile.rb](../brewfile.rb)). In the 1Password app, turn on
+      **Settings → Developer → Integrate with 1Password CLI**.
+   2. Create a long-lived access token: open your Home Assistant profile's
+      [**Security** tab](https://my.home-assistant.io/redirect/profile_security),
+      scroll to **Long-lived access tokens** near the bottom, and select
+      **Create token**. Home Assistant shows the token only once.
+   3. In 1Password, save it as an **API Credential** item named
+      `Home Assistant (ha-yellow)`, with the token in the **credential** field.
 
    Then, from the repo root, run `nu ha-blueprints/upload.nu`. The uploader
    copies the blueprint files to `/config/blueprints/` over SSH, using the
    `ha-yellow` alias from [ssh-config](../ssh-config), then reloads all YAML
    configuration. It doesn't delete other blueprints. If the configuration is
    invalid, Home Assistant reports the error and reloads nothing.
+
+   1Password asks you to approve the first upload in each terminal window,
+   with Touch ID or your password. It asks again after 10 minutes without a
+   1Password command in that window, or after 12 hours.
 2. In **Settings → Automations & scenes → Blueprints**, create an automation
    from **Lights off policy**. Add a row for each light, then save:
 

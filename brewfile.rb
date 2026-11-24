@@ -30,6 +30,7 @@ def add_shared_deps
   cask 'gimp'
   cask 'git-credential-manager'
   cask 'proxyman'
+  cask '1password-cli'
   
   ### Self updating
   

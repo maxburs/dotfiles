@@ -1,14 +1,18 @@
 const ROOT = path self .
 const HA_URL = 'http://homeassistant.local:8123'
-# A long-lived access token (HA profile → Security), stored once in the macOS Keychain with:
-#   security add-generic-password -s ha-yellow -a home-assistant -w
-const TOKEN_SERVICE = 'ha-yellow'
+# 1Password API Credential item whose "credential" field holds a Home Assistant
+# long-lived access token. See README.md for setup.
+const TOKEN_ITEM = 'Home Assistant (ha-yellow)'
 
 cd $ROOT
 
-let token = do { ^security find-generic-password -s $TOKEN_SERVICE -w } | complete
+if (which op | is-empty) {
+  error make {msg: "1Password CLI isn't installed. Run: brew install --cask 1password-cli"}
+}
+# 1Password asks you to approve the first use in each terminal session.
+let token = do { ^op item get $TOKEN_ITEM --fields label=credential --reveal } | complete
 if $token.exit_code != 0 {
-  error make {msg: $"No Home Assistant token in the Keychain. Create a long-lived access token in your HA profile under Security, then run: security add-generic-password -s ($TOKEN_SERVICE) -a home-assistant -w"}
+  error make {msg: $"Couldn't read the Home Assistant token from the 1Password item '($TOKEN_ITEM)': ($token.stderr | str trim)"}
 }
 
 let files = glob --no-dir --no-symlink '{automation,script,template}/**/*.{yaml,yml}' | path relative-to $ROOT
