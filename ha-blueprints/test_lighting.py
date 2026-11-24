@@ -2,7 +2,7 @@
 # requires-python = ">=3.14.2,<3.15"
 # dependencies = ["homeassistant==2026.11.3"]
 # ///
-"""Run with `uv run --script ha-blueprints/test_lighting.py`."""
+"""Run from the repo root: `nix develop ./ha-blueprints --command uv run --script ha-blueprints/test_lighting.py`."""
 
 from datetime import timedelta
 from pathlib import Path
@@ -26,6 +26,8 @@ ORB = "light.bedroom_orb"  # not managed by Adaptive Lighting
 POLICY = "automation.lights_off"
 PROFILE, DIMMER = "switch.room_profile", "switch.room_adapt_brightness"
 OTHER_PROFILE, OTHER_DIMMER = "switch.other_profile", "switch.other_adapt_brightness"
+# HA appends a number when several remotes share a name, as with a second BILRESA.
+REMOTE_BUTTON = "event.bilresa_dual_button_button_{}_3"
 RANGES = [
     {"light": SHELF, "from": "18:00:00", "until": "07:00:00"},
     {"light": CEILING, "from": "18:01:00", "until": "18:02:00"},  # starts the very next minute
@@ -61,8 +63,8 @@ class LightsOffPolicyTest(unittest.IsolatedAsyncioTestCase):
         await self.add_profile(PROFILE, DIMMER)
         remote = await self.add_device("matter", "BILRESA")
         for button in (1, 2):
-            self.add_entity(f"event.remote_button_{button}", device=remote, area=None)
-            h.states.async_set(f"event.remote_button_{button}", "2026-01-01T00:00:00+00:00")
+            self.add_entity(REMOTE_BUTTON.format(button), device=remote, area=None)
+            h.states.async_set(REMOTE_BUTTON.format(button), "2026-01-01T00:00:00+00:00")
 
         self.calls = []
 
@@ -155,7 +157,7 @@ class LightsOffPolicyTest(unittest.IsolatedAsyncioTestCase):
         await self.hass.async_block_till_done()
 
     async def press(self, button):
-        self.hass.states.async_set(f"event.remote_button_{button}", dt_util.utcnow().isoformat(),
+        self.hass.states.async_set(REMOTE_BUTTON.format(button), dt_util.utcnow().isoformat(),
                                    {"event_type": "multi_press_1"})
         await self.hass.async_block_till_done()
 

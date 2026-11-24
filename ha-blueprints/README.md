@@ -83,12 +83,15 @@ display name). Anything else stops with an error and turns nothing on:
 From the repo root:
 
 ```sh
-uv run --script ha-blueprints/test_lighting.py
+nix develop ./ha-blueprints --command uv run --script ha-blueprints/test_lighting.py
 ```
 
-With Nix but no installed `uv`, use
-`nix shell nixpkgs#uv -c uv run --script ha-blueprints/test_lighting.py`.
-The script declares its Python and HA Core requirements inline. Tests load the
+The [flake](./flake.nix) provides `uv` and Python 3.14, pinned in
+`flake.lock`, and stops `uv` from downloading another Python. Nix reads the
+flake from Git, so commit or `git add` changes to `flake.nix` and `flake.lock`
+first. To update the pins, run `nix flake update --flake ./ha-blueprints`.
+
+The test script declares its Home Assistant version inline. Tests load the
 blueprints in a temporary HA configuration, advance a simulated clock, change
 profile and button states, and check which commands reach the lights. No SSH,
 HACS, credentials or hardware are used. To test another Core version, change
