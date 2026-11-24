@@ -9,7 +9,8 @@ on it:
   and hold again to resume adaptive lighting.
 - **Lights off policy**
   ([blueprint](./automation/local/lights_off_policy.yaml)): a list of lights,
-  each with the time it turns off and the time it's allowed back on.
+  each with the time it turns off and the time it's allowed back on. It works
+  for any light, whether or not it uses Adaptive Lighting.
 
 ## Set up
 
@@ -36,12 +37,9 @@ on it:
 3. In each room's BILRESA automation, select that automation under
    **Lights off policy**.
 
-Adaptive Lighting profiles are found through each light's area. A listed light
-doesn't need to be in a profile. If its area has more than one profile, enable
-`include_config_in_attributes` on them; otherwise turning off just the light's
-own profile won't exempt it. Enable it too under
-`take_over_control_mode: pause_changed`, so a color-only override doesn't
-exempt a light.
+The hold finds a room's Adaptive Lighting profiles through their devices, so
+assign each profile's device to the room of its lights, and keep each profile
+within one room. In a room without a profile, the hold does nothing.
 
 To change the lights or hours later, edit the list and save.
 
@@ -52,25 +50,26 @@ can also delete its old files under `/config/blueprints/template/` or
 
 ## Behavior
 
-- **When a range starts**, the light turns off if it's on, unless it's exempt.
-  A light is exempt while Adaptive Lighting has it under manual control, for
-  example after BILRESA's full-white hold, or while every profile in its area
-  that could manage it is off or has Adapt Brightness off.
-- **During the range**, BILRESA's room-on tap skips the light unless it's
-  exempt, along with any Home Assistant light group in the room that contains
-  it. Room-off and the full-white hold still target the whole room. Holding
-  again to resume adaptation leaves a lit light on.
+- **When a range starts**, the light turns off if it's on, unless Adaptive
+  Lighting marks it as manually controlled, for example after the full-white
+  hold.
+- **During the range**, BILRESA's room-on tap skips the light, along with any
+  Home Assistant light group in the room that contains it. Room-off and the
+  full-white hold still target the whole room, so the hold turns the light on.
+  If the light is in an Adaptive Lighting profile, it then stays on until you
+  turn it off; otherwise it also turns off at its next range start. Turning
+  Adaptive Lighting off doesn't exempt a light.
 - **When the range ends**, nothing turns on.
 
 Ranges apply every day, can cross midnight, and are checked to the minute. Equal
 **Off from** and **Off until** times mean all day. A light can have more than
 one row. Editing the list doesn't turn anything off until the next range starts.
 
-Dashboard, voice, scenes and other direct commands bypass the policy. Bridge
-groups such as Hue zones don't expose their member lights, so if one is in the
-room, room-on turns it on, including any member in its off hours. Turning the
-Lights off policy automation off pauses it: ranges don't start, and buttons
-turn lights on normally.
+Dashboard, voice, scenes and other direct commands bypass the policy. Hue rooms
+and zones aren't checked for members, so if one is in the room, room-on turns it
+on, including any member in its off hours. Turning the Lights off policy
+automation off pauses it: ranges don't start, and buttons turn lights on
+normally.
 
 ## Turn lights on from another automation
 
@@ -102,6 +101,6 @@ first. To update the pins, run `nix flake update --flake ./ha-blueprints`.
 
 The test script declares its Home Assistant version inline. Tests load the
 blueprints in a temporary HA configuration, advance a simulated clock, change
-profile and button states, and check which commands reach the lights. No SSH,
-HACS, credentials or hardware are used. To test another Core version, change
-the dependency pin.
+Adaptive Lighting and button states, and check which commands reach the lights
+and Adaptive Lighting. No SSH, HACS, credentials or hardware are used. To test
+another Core version, change the dependency pin.

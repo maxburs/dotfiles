@@ -3,21 +3,14 @@ blueprint:
   description: >-
     Keep listed lights off during their off hours, every day. When a light's
     range starts, it turns off if it's on. Buttons that turn lights on through
-    this automation skip lights inside their range. A light is exempt while
-    Adaptive Lighting has it under manual control (for example after a
-    full-white override), or while every Adaptive Lighting profile in its area
-    that could manage it is off or has Adapt Brightness off. The end of a range
-    never turns a light on.
+    this automation skip lights inside their range. Lights that Adaptive
+    Lighting marks as manually controlled, for example after a full-white
+    override, are left alone. The end of a range never turns a light on.
 
     To turn lights on through this automation, call `automation.trigger` with
     `variables: {room: <area ID>}` or `variables: {light: <entity ID>}`. While
     this automation is off, ranges don't start and requests turn lights on
     normally.
-
-    Adaptive Lighting profiles are found through the light's area. To exempt a
-    light by turning off just its own profile when its area has several, or to
-    ignore color-only overrides under `pause_changed`, enable
-    `include_config_in_attributes` on those profiles.
   domain: automation
   homeassistant:
     min_version: "2026.11.0"
@@ -73,11 +66,10 @@ actions:
       area: "{{ room | default('') }}"
       lamp: "{{ light | default('') }}"
       # Lights whose range starts now (for the trigger) or includes now (for requests),
-      # minus exempt ones: under Adaptive Lighting manual control, or every profile in
-      # the light's area that could manage it is off or has Adapt Brightness off.
+      # except lights Adaptive Lighting marks as manually controlled.
       skipped: >-
         {% set hm = now().strftime('%H:%M') %}
-        {% set ns = namespace(lights=[], hits=[]) %}
+        {% set ns = namespace(lights=[]) %}
         {% for r in ranges %}
           {% set a = (r['from'] | string)[:5] %}
           {% set b = (r['until'] | string)[:5] %}
@@ -87,33 +79,9 @@ actions:
             {% set ns.lights = ns.lights + [r['light']] %}
           {% endif %}
         {% endfor %}
-        {% set al = integration_entities('adaptive_lighting') %}
-        {% for light in ns.lights | unique %}
-          {% set area = area_id(light) %}
-          {% set profiles = expand(al | select('in', area_entities(area)) | list)
-               | selectattr('domain', 'eq', 'switch')
-               | selectattr('attributes.configuration', 'defined') | list if area else [] %}
-          {% set st = namespace(manual=false, candidates=0, disabled=0) %}
-          {% for p in profiles %}
-            {% set config = p.attributes.configuration or {} %}
-            {% set manual = p.attributes.get('manual_control_brightness'
-                 if config.get('take_over_control_mode') == 'pause_changed' else 'manual_control') or [] %}
-            {% set st.manual = st.manual or light in manual %}
-            {# Without an exposed light list, any profile in the area might manage it. #}
-            {% if light in config.get('lights', [light]) %}
-              {% set dimmers = device_entities(device_id(p.entity_id)) | select('match', '^switch[.]')
-                   | select('is_state_attr', 'icon', 'mdi:brightness-4') | list %}
-              {% set st.candidates = st.candidates + 1 %}
-              {% if p.state == 'off' or (dimmers | count == 1 and is_state(dimmers[0], 'off')) %}
-                {% set st.disabled = st.disabled + 1 %}
-              {% endif %}
-            {% endif %}
-          {% endfor %}
-          {% if not st.manual and (st.candidates == 0 or st.disabled < st.candidates) %}
-            {% set ns.hits = ns.hits + [light] %}
-          {% endif %}
-        {% endfor %}
-        {{ ns.hits | unique | list }}
+        {% set manual = integration_entities('adaptive_lighting') | map('state_attr', 'manual_control')
+             | reject('none') | sum(start=[]) %}
+        {{ ns.lights | unique | reject('in', manual) | list }}
   - choose:
       - alias: Turn off lights whose range starts now
         conditions: "{{ starting }}"

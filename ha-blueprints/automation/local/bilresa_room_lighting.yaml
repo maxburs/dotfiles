@@ -93,8 +93,7 @@ actions:
                    | map(attribute='entity_id') | list }}
           - if: "{{ not profiles }}"
             then:
-              - stop: "No Adaptive Lighting main switch found. Assign the profile device to the selected area."
-                error: true
+              - stop: "No Adaptive Lighting profile in this room. Assign a profile's device to the room to use the hold."
           - variables:
               plans: >-
                 {% set ns = namespace(rows=[]) %}

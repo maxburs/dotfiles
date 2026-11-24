@@ -12,6 +12,7 @@ import unittest
 from unittest.mock import AsyncMock, patch
 
 from homeassistant import bootstrap, config_entries, loader, setup
+import probatio
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import area_registry, config_validation as cv, device_registry, entity_registry, event
@@ -22,10 +23,9 @@ import homeassistant.util.dt as dt_util
 ROOT = Path(__file__).resolve().parent
 ROOM = "living_room"
 SHELF, CEILING, INDICATOR, GROUP = "light.shelf", "light.ceiling", "light.indicator", "light.room_group"
-ORB = "light.bedroom_orb"  # not managed by Adaptive Lighting
+ORB = "light.bedroom_orb"
 POLICY = "automation.lights_off"
 PROFILE, DIMMER = "switch.room_profile", "switch.room_adapt_brightness"
-OTHER_PROFILE, OTHER_DIMMER = "switch.other_profile", "switch.other_adapt_brightness"
 # HA appends a number when several remotes share a name, as with a second BILRESA.
 REMOTE_BUTTON = "event.bilresa_dual_button_button_{}_3"
 RANGES = [
@@ -66,16 +66,25 @@ class LightsOffPolicyTest(unittest.IsolatedAsyncioTestCase):
             self.add_entity(REMOTE_BUTTON.format(button), device=remote, area=None)
             h.states.async_set(REMOTE_BUTTON.format(button), "2026-01-01T00:00:00+00:00")
 
-        self.calls = []
+        self.calls, self.light_data, self.al_calls = [], [], []
 
         @callback
         def light_action(call):
-            self.calls.append((call.service, call.data.get("entity_id") or call.data["area_id"]))
+            self.calls.append((call.service, call.data["entity_id"] if "entity_id" in call.data else call.data["area_id"]))
+            self.light_data.append({k: v for k, v in call.data.items() if k not in ("entity_id", "area_id")})
             for lamp in call.data.get("entity_id", []):
                 h.states.async_set(lamp, "on" if call.service == "turn_on" else "off")
 
+        @callback
+        def al_action(call):
+            self.al_calls.append((f"{call.domain}.{call.service}", dict(call.data)))
+
         for action in ("turn_on", "turn_off"):
-            h.services.async_register("light", action, light_action, cv.make_entity_service_schema({}))
+            h.services.async_register("light", action, light_action,
+                                      cv.make_entity_service_schema({}, extra=probatio.ALLOW_EXTRA))
+        for domain, action in (("adaptive_lighting", "set_manual_control"),
+                               ("adaptive_lighting", "apply"), ("switch", "turn_on")):
+            h.services.async_register(domain, action, al_action)
 
         config = {"automation": [
             {"id": "lights_off", "alias": "Lights off", "use_blueprint": {
@@ -156,10 +165,13 @@ class LightsOffPolicyTest(unittest.IsolatedAsyncioTestCase):
             "automation", "trigger", {"entity_id": POLICY, "variables": variables}, blocking=True)
         await self.hass.async_block_till_done()
 
-    async def press(self, button):
+    async def press(self, button, event_type="multi_press_1"):
         self.hass.states.async_set(REMOTE_BUTTON.format(button), dt_util.utcnow().isoformat(),
-                                   {"event_type": "multi_press_1"})
+                                   {"event_type": event_type})
         await self.hass.async_block_till_done()
+
+    async def hold(self):
+        await self.press(1, "long_press")
 
     async def test_range_start_turns_off_listed_lights(self):
         await self.at("17:59")
@@ -187,37 +199,14 @@ class LightsOffPolicyTest(unittest.IsolatedAsyncioTestCase):
         await self.request(room=ROOM)
         self.assertEqual(self.calls[-1], ("turn_on", [ROOM]))
 
-    async def test_manual_or_disabled_adaptation_bypasses_policy(self):
-        self.set_profile(manual=[SHELF])
-        await self.at("18:00")
-        self.assertEqual(self.lights("turn_off"), [ORB])
-        for kwargs in ({"manual": [SHELF]}, {"dimmer_state": "off"}, {"state": "off"}):
-            self.set_profile(**kwargs)
-            self.calls.clear()
-            await self.request(light=SHELF)
-            self.assertEqual(self.calls, [("turn_on", [SHELF])], kwargs)
-        self.set_profile(mode="pause_changed", manual=[SHELF], brightness=[])  # color-only override
-        self.calls.clear()
-        await self.request(light=SHELF)
-        self.assertEqual(self.calls, [])
-
-    async def test_exemption_needs_every_profile_that_could_manage_the_light(self):
-        await self.add_profile(OTHER_PROFILE, OTHER_DIMMER, lights=[CEILING])
-        self.set_profile(state="off", lights=[SHELF])  # the shelf's own profile is off
+    async def test_policy_spares_manually_controlled_lights_only(self):
+        self.set_profile(lights=[SHELF], manual=[SHELF])  # e.g. after a full-white hold
         await self.at("18:00")
         self.assertNotIn(SHELF, self.lights("turn_off"))
-        self.set_profile(lights=[SHELF])
-        self.set_profile(OTHER_PROFILE, OTHER_DIMMER, state="off", lights=[CEILING])
+        self.assertIn(ORB, self.lights("turn_off"))
+        self.set_profile(state="off", lights=[SHELF])  # turning Adaptive Lighting off doesn't exempt it
         await self.request(light=SHELF)
         self.assertNotIn(SHELF, self.lights("turn_on"))
-        # Without each profile's light list, any profile in the area might manage the shelf.
-        self.set_profile(state="off")
-        self.set_profile(OTHER_PROFILE, OTHER_DIMMER)
-        await self.request(light=SHELF)
-        self.assertNotIn(SHELF, self.lights("turn_on"))
-        self.set_profile(OTHER_PROFILE, OTHER_DIMMER, state="off")
-        await self.request(light=SHELF)
-        self.assertIn(SHELF, self.lights("turn_on"))
 
     async def test_room_button_uses_policy_for_on_only(self):
         await self.at("19:00")
@@ -229,6 +218,36 @@ class LightsOffPolicyTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.calls[-1], ("turn_on", [ROOM]))  # falls back to the whole room
         await self.request(light=SHELF)
         self.assertEqual(self.calls[-1], ("turn_on", [SHELF]))  # other callers are paused too
+
+    async def test_hold_sets_the_room_to_full_white(self):
+        await self.hold()
+        self.assertEqual(self.al_calls, [("adaptive_lighting.set_manual_control",
+                                          {"entity_id": [PROFILE], "manual_control": True})])
+        self.assertEqual(self.calls, [("turn_on", [ROOM])])
+        self.assertEqual(self.light_data, [{"brightness_pct": 100, "color_temp_kelvin": 4000}])
+
+    async def test_hold_resumes_overridden_or_disabled_adaptation(self):
+        apply = ("adaptive_lighting.apply", {"entity_id": [PROFILE], "adapt_brightness": True,
+                                             "adapt_color": False, "turn_on_lights": False})
+        self.set_profile(manual=[CEILING])
+        await self.hold()
+        self.assertEqual(self.al_calls, [("adaptive_lighting.set_manual_control",
+                                          {"entity_id": PROFILE, "lights": [CEILING], "manual_control": False}),
+                                         apply])
+        self.al_calls.clear()
+        self.set_profile(dimmer_state="off")
+        await self.hold()
+        self.assertEqual(self.al_calls, [("switch.turn_on", {"entity_id": [DIMMER]}), apply])
+        self.assertEqual(self.calls, [])
+
+    async def test_hold_does_nothing_in_a_room_without_a_profile(self):
+        devices = device_registry.async_get(self.hass)
+        profile_device = entity_registry.async_get(self.hass).async_get(PROFILE).device_id
+        devices.async_update_device(profile_device, area_id="bedroom")
+        with self.assertLogs("homeassistant.components.automation.room_button", "INFO") as logs:
+            await self.hold()
+        self.assertEqual((self.calls, self.al_calls), ([], []))
+        self.assertIn("Stop script sequence: No Adaptive Lighting profile in this room", "\n".join(logs.output))
 
     async def test_invalid_request_turns_nothing_on(self):
         await self.request(light=SHELF, room=ROOM)
