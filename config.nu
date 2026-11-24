@@ -1,6 +1,9 @@
 # https://www.nushell.sh/book/configuration.html
 
 const env_dir = ($nu.home-dir | path join '.env')
+const workspace_path = '~/workspace' | path expand
+const worktrees_path = $workspace_path | path join 'worktrees'
+const dotfiles_path = $workspace_path | path join 'dotfiles'
 
 # ~/.env/<NAME> holds the value of env var NAME.
 def _read-env-dir []: nothing -> record {
@@ -36,8 +39,8 @@ _read-env-dir | load-env
 use std/assert
 use std/util "path add"
 
-# Load modules from this repo by name, from any folder: `use ha`.
-const NU_LIB_DIRS = $NU_LIB_DIRS ++ [(path self .)]
+
+const NU_LIB_DIRS = $NU_LIB_DIRS ++ [($workspace_path | path join 'home-assistant/nu-lib-dir')]
 
 $env.config.show_banner = false
 $env.config.buffer_editor = ['code' '--wait']
@@ -75,10 +78,6 @@ $env.PROMPT_INDICATOR = ' % '
 #   $env.worktree_hooks  closures _start-feature runs in new worktrees, keyed by the origin URL's
 #                        last segment: {dotfiles.git: {|| ... }}
 $env.computer_type = $env.computer_type? | default 'home'
-
-let workspace_path = '~/workspace' | path expand
-let worktrees_path = $workspace_path | path join 'worktrees'
-let dotfiles_path = $workspace_path | path join 'dotfiles'
 
 # The Brewfile for _bbic and _brew-unmanaged.
 def _brewfile [] {
