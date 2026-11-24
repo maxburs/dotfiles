@@ -8,7 +8,9 @@ blueprint:
     Each lamp's override clears on its own off/on cycle.
 
     Use a Matter BILRESA dual button with event entity IDs ending in
-    `_button_1` and `_button_2` and events `multi_press_1` and `long_press`.
+    `_button_1` and `_button_2`, optionally followed by the number Home
+    Assistant adds for duplicate names (for example `_button_1_3`), and events
+    `multi_press_1` and `long_press`.
     Assign each Adaptive Lighting profile device to the area of the lights
     it controls, and keep each profile within one room. Use Adaptive Lighting
     1.32 or newer. If using `pause_changed` rather than the default `pause_all`,
@@ -41,6 +43,8 @@ mode: queued
 variables:
   room_id: !input room
   room_on_policy: !input room_on_policy
+  # Home Assistant appends _2, _3, ... to entity IDs when several remotes share a name.
+  button: "{{ trigger.entity_id | regex_findall('_button_([12])(?:_[0-9]+)?$') | first | default(0) | int }}"
 triggers:
   - trigger: event.received
     id: tap
@@ -60,11 +64,11 @@ actions:
       - alias: Tap a button to turn the room lights on or off
         conditions: "{{ trigger.id == 'tap' }}"
         sequence:
-          - if: "{{ not trigger.entity_id.endswith(('_button_1', '_button_2')) }}"
+          - if: "{{ button == 0 }}"
             then:
-              - stop: "Expected a BILRESA event entity ID ending in _button_1 or _button_2."
+              - stop: "Expected a BILRESA event entity ID ending in _button_1 or _button_2 (optionally with a numeric suffix)."
                 error: true
-          - if: "{{ trigger.entity_id.endswith('_button_1') and room_on_policy and is_state(room_on_policy, 'on') }}"
+          - if: "{{ button == 1 and room_on_policy and is_state(room_on_policy, 'on') }}"
             then:
               - action: automation.trigger
                 target:
@@ -73,12 +77,12 @@ actions:
                   variables:
                     room: "{{ room_id }}"
             else:
-              - action: "{{ 'light.turn_on' if trigger.entity_id.endswith('_button_1') else 'light.turn_off' }}"
+              - action: "{{ 'light.turn_on' if button == 1 else 'light.turn_off' }}"
                 target:
                   area_id: !input room
 
       - alias: Toggle full neutral white and Adaptive Lighting
-        conditions: "{{ trigger.id == 'hold' and trigger.entity_id.endswith('_button_1') }}"
+        conditions: "{{ trigger.id == 'hold' and button == 1 }}"
         sequence:
           - variables:
               profiles: >-
