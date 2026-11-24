@@ -13,10 +13,19 @@ on it:
 
 ## Set up
 
-1. From the repo root, run `nu ha-blueprints/upload.nu`. The uploader copies
-   the blueprint files to `/config/blueprints/` over SSH, using the
-   `ha-yellow` alias from [ssh-config](../ssh-config). It doesn't delete other
-   blueprints. When updating, reload automations afterward.
+1. Create a long-lived access token in your Home Assistant profile, under
+   **Security**, and store it in the macOS Keychain. Running this prompts for
+   the token, so it stays out of your shell history:
+
+   ```sh
+   security add-generic-password -s ha-yellow -a home-assistant -w
+   ```
+
+   Then, from the repo root, run `nu ha-blueprints/upload.nu`. The uploader
+   copies the blueprint files to `/config/blueprints/` over SSH, using the
+   `ha-yellow` alias from [ssh-config](../ssh-config), then reloads all YAML
+   configuration. It doesn't delete other blueprints. If the configuration is
+   invalid, Home Assistant reports the error and reloads nothing.
 2. In **Settings → Automations & scenes → Blueprints**, create an automation
    from **Lights off policy**. Add a row for each light, then save:
 
