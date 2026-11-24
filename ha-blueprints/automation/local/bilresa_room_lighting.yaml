@@ -28,10 +28,19 @@ blueprint:
       name: Room to control
       selector:
         area: {}
+    room_on_policy:
+      name: Lights off policy (optional)
+      description: >-
+        Select your "Lights off policy" automation. Tapping button 1 then skips
+        lights in their off hours. If that automation is off, the whole room
+        turns on.
+      default: ""
+      selector: {entity: {filter: {domain: automation}}}
 
 mode: queued
 variables:
   room_id: !input room
+  room_on_policy: !input room_on_policy
 triggers:
   - trigger: event.received
     id: tap
@@ -55,9 +64,18 @@ actions:
             then:
               - stop: "Expected a BILRESA event entity ID ending in _button_1 or _button_2."
                 error: true
-          - action: "{{ 'light.turn_on' if trigger.entity_id.endswith('_button_1') else 'light.turn_off' }}"
-            target:
-              area_id: !input room
+          - if: "{{ trigger.entity_id.endswith('_button_1') and room_on_policy and is_state(room_on_policy, 'on') }}"
+            then:
+              - action: automation.trigger
+                target:
+                  entity_id: "{{ room_on_policy }}"
+                data:
+                  variables:
+                    room: "{{ room_id }}"
+            else:
+              - action: "{{ 'light.turn_on' if trigger.entity_id.endswith('_button_1') else 'light.turn_off' }}"
+                target:
+                  area_id: !input room
 
       - alias: Toggle full neutral white and Adaptive Lighting
         conditions: "{{ trigger.id == 'hold' and trigger.entity_id.endswith('_button_1') }}"
