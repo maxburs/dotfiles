@@ -10,6 +10,7 @@ xcode-select --install
 # ln ./.gitconfig ~/.gitconfig
 
 # ln ./.default-npm-packages ~/.default-npm-packages
+# ln -s ('./.agents' | path expand) ~/.agents
 
 # mkdir -p ~/.config/zed
 # ln ./zed-settings.json ~/.config/zed/settings.json
