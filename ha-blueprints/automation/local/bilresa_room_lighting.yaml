@@ -1,0 +1,131 @@
+blueprint:
+  name: BILRESA room lighting
+  description: |
+    Tap button 1 for lights on; tap button 2 for lights off. Hold button 1
+    for full brightness and neutral white (4000 K). If a room profile has
+    brightness adaptation off or a lamp on manual brightness, holding instead
+    resumes the profile without turning on lights that are off.
+    Each lamp's override clears on its own off/on cycle.
+
+    Use a Matter BILRESA dual button with event entity IDs ending in
+    `_button_1` and `_button_2` and events `multi_press_1` and `long_press`.
+    Assign each Adaptive Lighting profile device to the area of the lights
+    it controls, and keep each profile within one room. Use Adaptive Lighting
+    1.32 or newer. If using `pause_changed` rather than the default `pause_all`,
+    enable `include_config_in_attributes` so color-only overrides are recognized.
+  domain: automation
+  homeassistant:
+    min_version: "2026.7.0"
+  input:
+    remote:
+      name: BILRESA dual button
+      selector:
+        device:
+          filter:
+            - integration: matter
+              model: BILRESA dual button
+    room:
+      name: Room to control
+      selector:
+        area: {}
+
+mode: queued
+variables:
+  room_id: !input room
+triggers:
+  - trigger: event.received
+    id: tap
+    target:
+      device_id: !input remote
+    options:
+      event_type: [multi_press_1]
+  - trigger: event.received
+    id: hold
+    target:
+      device_id: !input remote
+    options:
+      event_type: [long_press]
+
+actions:
+  - choose:
+      - alias: Tap a button to turn the room lights on or off
+        conditions: "{{ trigger.id == 'tap' }}"
+        sequence:
+          - if: "{{ not trigger.entity_id.endswith(('_button_1', '_button_2')) }}"
+            then:
+              - stop: "Expected a BILRESA event entity ID ending in _button_1 or _button_2."
+                error: true
+          - action: "{{ 'light.turn_on' if trigger.entity_id.endswith('_button_1') else 'light.turn_off' }}"
+            target:
+              area_id: !input room
+
+      - alias: Toggle full neutral white and Adaptive Lighting
+        conditions: "{{ trigger.id == 'hold' and trigger.entity_id.endswith('_button_1') }}"
+        sequence:
+          - variables:
+              profiles: >-
+                {{ expand(integration_entities('adaptive_lighting'))
+                   | selectattr('entity_id', 'in', area_entities(room_id))
+                   | selectattr('domain', 'eq', 'switch')
+                   | selectattr('attributes.configuration', 'defined')
+                   | map(attribute='entity_id') | list }}
+          - if: "{{ not profiles }}"
+            then:
+              - stop: "No Adaptive Lighting main switch found. Assign the profile device to the selected area."
+                error: true
+          - variables:
+              plans: >-
+                {% set ns = namespace(rows=[]) %}
+                {% for p in profiles %}
+                  {% set dimmers = device_entities(device_id(p))
+                     | select('match', '^switch[.]')
+                     | select('is_state_attr', 'icon', 'mdi:brightness-4') | list %}
+                  {% set separate = state_attr(p, 'configuration').get('take_over_control_mode') == 'pause_changed' %}
+                  {% set blocked = state_attr(p, 'manual_control_brightness' if separate else 'manual_control') or [] %}
+                  {% set ns.rows = ns.rows + [dict(profile=p, dimmers=dimmers, blocked=blocked)] %}
+                {% endfor %}
+                {{ ns.rows }}
+          - if: "{{ plans | map(attribute='dimmers') | map('count') | reject('eq', 1) | list | count > 0 }}"
+            then:
+              - stop: "Cannot identify the Adapt Brightness switch for each profile. Check its default icon (mdi:brightness-4)."
+                error: true
+          - variables:
+              controls: "{{ profiles + (plans | map(attribute='dimmers') | sum(start=[])) }}"
+              disabled: "{{ controls | select('is_state', 'off') | list }}"
+              resume: "{{ disabled | count > 0 or plans | selectattr('blocked') | list | count > 0 }}"
+          - if: "{{ controls | reject('has_value') | list | count > 0 }}"
+            then:
+              - stop: "A room Adaptive Lighting control is unavailable."
+                error: true
+          - if: "{{ resume }}"
+            then:
+              - if: "{{ disabled | count > 0 }}"
+                then:
+                  - action: switch.turn_on
+                    target:
+                      entity_id: "{{ disabled }}"
+              - repeat:
+                  for_each: "{{ plans | selectattr('blocked') | list }}"
+                  sequence:
+                    - action: adaptive_lighting.set_manual_control
+                      data:
+                        entity_id: "{{ repeat.item.profile }}"
+                        lights: "{{ repeat.item.blocked }}"
+                        manual_control: false
+              - action: adaptive_lighting.apply
+                data:
+                  entity_id: "{{ profiles }}"
+                  adapt_brightness: true
+                  adapt_color: false
+                  turn_on_lights: false
+            else:
+              - action: adaptive_lighting.set_manual_control
+                data:
+                  entity_id: "{{ profiles }}"
+                  manual_control: true
+              - action: light.turn_on
+                target:
+                  area_id: !input room
+                data:
+                  brightness_pct: 100
+                  color_temp_kelvin: 4000
